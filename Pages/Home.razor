@@ -32,7 +32,7 @@ else
 
     @if (!ItemsFiltrados.Any())
     {
-        <p class="empty-msg">Aún no has agregado nada. ¡Presiona "Agregar" para empezar!</p>
+        <p class="empty-msg">Aún no has agregado nada.</p>
     }
     else
     {
@@ -57,7 +57,10 @@ else
                             <input type="checkbox" checked="@item.Visto" @onchange="e => MarcarVisto(item, (bool)e.Value!)" />
                             Vista
                         </label>
-                        <button class="btn-delete" @onclick="() => Eliminar(item.Id)">Eliminar</button>
+                        <div class="card-actions">
+                            <button class="btn-edit" @onclick="() => Editar(item.Id)">Editar</button>
+                            <button class="btn-delete" @onclick="() => Eliminar(item.Id)">Eliminar</button>
+                        </div>
                     </div>
                 </div>
             }
@@ -84,6 +87,8 @@ else
     }
 
     private void IrAAgregar() => Nav.NavigateTo("/agregar");
+
+    private void Editar(Guid id) => Nav.NavigateTo($"/agregar/{id}");
 
     private void AplicarFiltro(TipoContenido? tipo) => filtro = tipo;
 

@@ -1,63 +1,81 @@
 @page "/agregar"
+@page "/agregar/{Id:guid}"
 @inject LocalStorageService Storage
 @inject NavigationManager Nav
 
 <div class="header">
-    <h1>Agregar a la Watchlist</h1>
+    <h1>@(EsEdicion ? "Editar" : "Agregar") a la Watchlist</h1>
 </div>
 
-<EditForm Model="nuevoItem" OnValidSubmit="Guardar" class="form-agregar">
+<EditForm Model="item" OnValidSubmit="Guardar" class="form-agregar">
     <DataAnnotationsValidator />
 
     <label>Título</label>
-    <InputText @bind-Value="nuevoItem.Titulo" placeholder="Ej. Breaking Bad" />
+    <InputText @bind-Value="item.Titulo" placeholder="Ej. Breaking Bad" />
 
     <label>Portada (URL de la imagen)</label>
-    <InputText @bind-Value="nuevoItem.PortadaUrl" placeholder="https://..." />
+    <InputText @bind-Value="item.PortadaUrl" placeholder="https://..." />
 
-    @if (!string.IsNullOrWhiteSpace(nuevoItem.PortadaUrl))
+    @if (!string.IsNullOrWhiteSpace(item.PortadaUrl))
     {
-        <div class="preview" style="background-image:url('@nuevoItem.PortadaUrl')"></div>
+        <div class="preview" style="background-image:url('@item.PortadaUrl')"></div>
     }
-    <label></label>
+
     <label>Tipo</label>
     <div class="tipo-selector">
         <label>
-            <input type="radio" name="tipo" checked="@(nuevoItem.Tipo == TipoContenido.Pelicula)"
-                  @onchange="() => nuevoItem.Tipo = TipoContenido.Pelicula" />
+            <input type="radio" name="tipo" checked="@(item.Tipo == TipoContenido.Pelicula)"
+                   @onchange="() => item.Tipo = TipoContenido.Pelicula" />
             Película
         </label>
         <label>
-            <input type="radio" name="tipo" checked="@(nuevoItem.Tipo == TipoContenido.Serie)"
-                  @onchange="() => nuevoItem.Tipo = TipoContenido.Serie" />
+            <input type="radio" name="tipo" checked="@(item.Tipo == TipoContenido.Serie)"
+                   @onchange="() => item.Tipo = TipoContenido.Serie" />
             Serie
         </label>
     </div>
 
-    @if (nuevoItem.Tipo == TipoContenido.Serie)
+    @if (item.Tipo == TipoContenido.Serie)
     {
         <label>Número de episodios</label>
-        <InputNumber @bind-Value="nuevoItem.NumeroEpisodios" placeholder="Ej. 62" />
+        <InputNumber @bind-Value="item.NumeroEpisodios" placeholder="Ej. 62" />
     }
 
     <div class="form-buttons">
-        <button type="submit" class="btn-add">Guardar</button>
+        <button type="submit" class="btn-add">@(EsEdicion ? "Guardar cambios" : "Guardar")</button>
         <button type="button" class="btn-cancel" @onclick="Cancelar">Cancelar</button>
     </div>
 </EditForm>
 
 @code {
-    private WatchlistItem nuevoItem = new();
+    [Parameter] public Guid? Id { get; set; }
+
+    private WatchlistItem item = new();
+    private bool EsEdicion => Id is not null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (EsEdicion)
+        {
+            var existente = (await Storage.GetAllAsync()).FirstOrDefault(i => i.Id == Id);
+            if (existente is not null)
+                item = existente;
+        }
+    }
 
     private async Task Guardar()
     {
-        if (string.IsNullOrWhiteSpace(nuevoItem.Titulo))
+        if (string.IsNullOrWhiteSpace(item.Titulo))
             return;
 
-        if (nuevoItem.Tipo == TipoContenido.Pelicula)
-            nuevoItem.NumeroEpisodios = null;
+        if (item.Tipo == TipoContenido.Pelicula)
+            item.NumeroEpisodios = null;
 
-        await Storage.AddAsync(nuevoItem);
+        if (EsEdicion)
+            await Storage.UpdateAsync(item);
+        else
+            await Storage.AddAsync(item);
+
         Nav.NavigateTo("/");
     }
 
