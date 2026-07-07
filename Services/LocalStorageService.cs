@@ -36,7 +36,7 @@ public class LocalStorageService
   public async Task DeleteAsync(Guid id)
   {
     var items = await GetAllAsync();
-    var i = items.FindIndex(x => x.Id == id);
+    items.RemoveAll(i => i.Id == id);
     await SaveAllAsync(items);
   }
 }
