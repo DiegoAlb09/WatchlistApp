@@ -90,7 +90,7 @@ h1 { font-size: 1.6rem; margin: 0; }
 
 .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
     gap: 16px;
 }
 
@@ -114,6 +114,8 @@ h1 { font-size: 1.6rem; margin: 0; }
 .no-cover { font-size: 2.5rem; opacity: 0.4; }
 
 .card-body { padding: 10px 12px; }
+
+/* --- FIX: título ahora con color y contraste explícitos --- */
 .card-body h3 {
     font-size: 0.95rem;
     margin: 0 0 4px;
@@ -123,11 +125,13 @@ h1 { font-size: 1.6rem; margin: 0; }
     overflow-wrap: break-word;
     min-height: 2.4em;
 }
+
 .tipo-tag {
     font-size: 0.7rem;
     text-transform: uppercase;
     color: #f77f00;
     margin: 0 0 4px;
+    font-weight: 600;
 }
 .episodios { font-size: 0.75rem; color: #999; margin: 0 0 8px; }
 
@@ -138,7 +142,58 @@ h1 { font-size: 1.6rem; margin: 0; }
     font-size: 0.8rem;
     margin-bottom: 8px;
     cursor: pointer;
+    color: #ddd;
 }
+
+/* --- Checklist de episodios --- */
+.episodios-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 8px;
+    max-height: 90px;
+    overflow-y: auto;
+}
+.ep-check {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    background: #2b2c36;
+    border: 1px solid #3a3b45;
+    border-radius: 5px;
+    font-size: 0.7rem;
+    color: #ccc;
+    cursor: pointer;
+    position: relative;
+}
+.ep-check input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+}
+.ep-check:has(input:checked) {
+    background: #e63946;
+    border-color: #e63946;
+    color: white;
+}
+
+.card-actions {
+    display: flex;
+    gap: 6px;
+}
+.btn-edit {
+    background: transparent;
+    color: #4ea8de;
+    border: 1px solid #4ea8de;
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    flex: 1;
+}
+.btn-edit:hover { background: #4ea8de22; }
 
 .btn-delete {
     background: transparent;
@@ -148,7 +203,7 @@ h1 { font-size: 1.6rem; margin: 0; }
     padding: 4px 8px;
     font-size: 0.75rem;
     cursor: pointer;
-    width: 100%;
+    flex: 1;
 }
 .btn-delete:hover { background: #e6394622; }
 
@@ -211,20 +266,3 @@ h1 { font-size: 1.6rem; margin: 0; }
     bottom: 0;
     width: 100%;
 }
-
-.card-actions {
-    display: flex;
-    gap: 6px;
-}
-.btn-edit {
-    background: transparent;
-    color: #4ea8de;
-    border: 1px solid #4ea8de;
-    border-radius: 6px;
-    padding: 4px 8px;
-    font-size: 0.75rem;
-    cursor: pointer;
-    flex: 1;
-}
-.btn-edit:hover { background: #4ea8de22; }
-.btn-delete { flex: 1; }
