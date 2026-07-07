@@ -3,18 +3,63 @@
 @inject NavigationManager Nav
 
 <div class="header">
-  <h1>Agregar a la Watchlist</h1>
+    <h1>Agregar a la Watchlist</h1>
 </div>
 
-<EditForm>
-  <label>Título</label>
-  <label>Portada</label>
-  <label>Tipo</label>
-  <div class="tipo-selector">
-    <label>
-      <input type="radio" name="tipo" value="Serie" /> Serie
-      <input type="radio" name="tipo" value="Película" /> Película
-    </label>
-  </div>
+<EditForm Model="nuevoItem" OnValidSubmit="Guardar" class="form-agregar">
+    <DataAnnotationsValidator />
 
+    <label>Título</label>
+    <InputText @bind-Value="nuevoItem.Titulo" placeholder="Ej. Breaking Bad" />
+
+    <label>Portada (URL de la imagen)</label>
+    <InputText @bind-Value="nuevoItem.PortadaUrl" placeholder="https://..." />
+
+    @if (!string.IsNullOrWhiteSpace(nuevoItem.PortadaUrl))
+    {
+        <div class="preview" style="background-image:url('@nuevoItem.PortadaUrl')"></div>
+    }
+    <label></label>
+    <label>Tipo</label>
+    <div class="tipo-selector">
+        <label>
+            <input type="radio" name="tipo" checked="@(nuevoItem.Tipo == TipoContenido.Pelicula)"
+                  @onchange="() => nuevoItem.Tipo = TipoContenido.Pelicula" />
+            Película
+        </label>
+        <label>
+            <input type="radio" name="tipo" checked="@(nuevoItem.Tipo == TipoContenido.Serie)"
+                  @onchange="() => nuevoItem.Tipo = TipoContenido.Serie" />
+            Serie
+        </label>
+    </div>
+
+    @if (nuevoItem.Tipo == TipoContenido.Serie)
+    {
+        <label>Número de episodios</label>
+        <InputNumber @bind-Value="nuevoItem.NumeroEpisodios" placeholder="Ej. 62" />
+    }
+
+    <div class="form-buttons">
+        <button type="submit" class="btn-add">Guardar</button>
+        <button type="button" class="btn-cancel" @onclick="Cancelar">Cancelar</button>
+    </div>
 </EditForm>
+
+@code {
+    private WatchlistItem nuevoItem = new();
+
+    private async Task Guardar()
+    {
+        if (string.IsNullOrWhiteSpace(nuevoItem.Titulo))
+            return;
+
+        if (nuevoItem.Tipo == TipoContenido.Pelicula)
+            nuevoItem.NumeroEpisodios = null;
+
+        await Storage.AddAsync(nuevoItem);
+        Nav.NavigateTo("/");
+    }
+
+    private void Cancelar() => Nav.NavigateTo("/");
+}

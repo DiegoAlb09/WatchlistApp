@@ -2,8 +2,100 @@
 @inject LocalStorageService Storage
 @inject NavigationManager Nav
 
-<PageTitle>Home</PageTitle>
+<div class="header">
+    <h1>Mi Watchlist</h1>
+    <button class="btn-add" @onclick="IrAAgregar">+ Agregar Serie/Película</button>
+</div>
 
-<h1>Hello, world!</h1>
+@if (items is null)
+{
+    <p>Cargando...</p>
+}
+else
+{
+    <div class="progress-card">
+        <div class="progress-text">
+            <span>@vistos vistas</span>
+            <span>@pendientes pendientes</span>
+        </div>
+        <div class="progress-bar">
+            <div class="progress-fill" style="width:@porcentaje%"></div>
+        </div>
+        <div class="progress-percent">@porcentaje% completado</div>
+    </div>
 
-Welcome to your new app.
+    <div class="filters">
+        <button class="@(filtro == null ? "filtro-activo" : "")" @onclick="() => AplicarFiltro(null)">Todo</button>
+        <button class="@(filtro == TipoContenido.Serie ? "filtro-activo" : "")" @onclick="() => AplicarFiltro(TipoContenido.Serie)">Solo series</button>
+        <button class="@(filtro == TipoContenido.Pelicula ? "filtro-activo" : "")" @onclick="() => AplicarFiltro(TipoContenido.Pelicula)">Solo películas</button>
+    </div>
+
+    @if (!ItemsFiltrados.Any())
+    {
+        <p class="empty-msg">Aún no has agregado nada. ¡Presiona "Agregar" para empezar!</p>
+    }
+    else
+    {
+        <div class="grid">
+            @foreach (var item in ItemsFiltrados)
+            {
+                <div class="card">
+                    <div class="cover" style="background-image:url('@item.PortadaUrl')">
+                        @if (string.IsNullOrWhiteSpace(item.PortadaUrl))
+                        {
+                            <span class="no-cover">🎞️</span>
+                        }
+                    </div>
+                    <div class="card-body">
+                        <h3>@item.Titulo</h3>
+                        <p class="tipo-tag">@(item.Tipo == TipoContenido.Serie ? "Serie" : "Película")</p>
+                        @if (item.Tipo == TipoContenido.Serie && item.NumeroEpisodios is not null)
+                        {
+                            <p class="episodios">@item.NumeroEpisodios episodios</p>
+                        }
+                        <label class="visto-check">
+                            <input type="checkbox" checked="@item.Visto" @onchange="e => MarcarVisto(item, (bool)e.Value!)" />
+                            Vista
+                        </label>
+                        <button class="btn-delete" @onclick="() => Eliminar(item.Id)">Eliminar</button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+}
+
+@code {
+    private List<WatchlistItem>? items;
+    private TipoContenido? filtro = null;
+
+    private IEnumerable<WatchlistItem> ItemsFiltrados =>
+        items is null ? Enumerable.Empty<WatchlistItem>()
+        : filtro is null ? items
+        : items.Where(i => i.Tipo == filtro);
+
+    private int vistos => items?.Count(i => i.Visto) ?? 0;
+    private int pendientes => (items?.Count ?? 0) - vistos;
+    private int porcentaje => (items is null || items.Count == 0) ? 0 : (int)Math.Round(vistos * 100.0 / items.Count);
+
+    protected override async Task OnInitializedAsync()
+    {
+        items = await Storage.GetAllAsync();
+    }
+
+    private void IrAAgregar() => Nav.NavigateTo("/agregar");
+
+    private void AplicarFiltro(TipoContenido? tipo) => filtro = tipo;
+
+    private async Task MarcarVisto(WatchlistItem item, bool valor)
+    {
+        item.Visto = valor;
+        await Storage.UpdateAsync(item);
+    }
+
+    private async Task Eliminar(Guid id)
+    {
+        await Storage.DeleteAsync(id);
+        items = await Storage.GetAllAsync();
+    }
+}
