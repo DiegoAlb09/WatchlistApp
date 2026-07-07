@@ -11,7 +11,7 @@
     <DataAnnotationsValidator />
 
     <label>Título</label>
-    <InputText @bind-Value="item.Titulo" placeholder="Ej. Breaking Bad" />
+    <InputText @bind-Value="item.Titulo" placeholder="Ej. One Piece" />
 
     <label>Portada (URL de la imagen)</label>
     <InputText @bind-Value="item.PortadaUrl" placeholder="https://..." />
@@ -37,8 +37,16 @@
 
     @if (item.Tipo == TipoContenido.Serie)
     {
-        <label>Número de episodios</label>
-        <InputNumber @bind-Value="item.NumeroEpisodios" placeholder="Ej. 62" />
+        <label>Rango de capítulos pendientes</label>
+        <div class="rango-episodios">
+            <InputNumber @bind-Value="item.EpisodioInicio" placeholder="Desde (ej. 1169)" />
+            <span class="rango-separador">–</span>
+            <InputNumber @bind-Value="item.EpisodioFin" placeholder="Hasta (ej. 1170)" />
+        </div>
+        @if (item.EpisodioInicio is not null && item.EpisodioFin is not null && item.EpisodioFin < item.EpisodioInicio)
+        {
+            <p class="rango-error">El capítulo "Hasta" debe ser mayor o igual que "Desde".</p>
+        }
     }
 
     <div class="form-buttons">
@@ -69,7 +77,21 @@
             return;
 
         if (item.Tipo == TipoContenido.Pelicula)
-            item.NumeroEpisodios = null;
+        {
+            item.EpisodioInicio = null;
+            item.EpisodioFin = null;
+        }
+        else
+        {
+            // Si el rango es invalido, no permite guardar
+            if (item.EpisodioInicio is null || item.EpisodioFin is null || item.EpisodioFin < item.EpisodioInicio)
+                return;
+
+            // Limpia episodios marcados que quedaron fuera del nuevo rango (ej. al editar)
+            item.EpisodiosVistos = item.EpisodiosVistos
+                .Where(e => e >= item.EpisodioInicio && e <= item.EpisodioFin)
+                .ToList();
+        }
 
         if (EsEdicion)
             await Storage.UpdateAsync(item);

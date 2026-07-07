@@ -1,6 +1,7 @@
 ﻿@page "/"
 @inject LocalStorageService Storage
 @inject NavigationManager Nav
+@inject IJSRuntime JS
 
 <div class="header">
     <h1>Mi Watchlist</h1>
@@ -15,7 +16,7 @@ else
 {
     <div class="progress-card">
         <div class="progress-text">
-            <span>@vistos vistas</span>
+            <span>@unidadesVistas vistas</span>
             <span>@pendientes pendientes</span>
         </div>
         <div class="progress-bar">
@@ -32,7 +33,7 @@ else
 
     @if (!ItemsFiltrados.Any())
     {
-        <p class="empty-msg">Aún no has agregado nada.</p>
+        <p class="empty-msg">Aún no has agregado nada. ¡Presiona "Agregar" para empezar!</p>
     }
     else
     {
@@ -49,17 +50,37 @@ else
                     <div class="card-body">
                         <h3>@item.Titulo</h3>
                         <p class="tipo-tag">@(item.Tipo == TipoContenido.Serie ? "Serie" : "Película")</p>
-                        @if (item.Tipo == TipoContenido.Serie && item.NumeroEpisodios is not null)
+
+                        @if (item.Tipo == TipoContenido.Serie && item.EpisodioInicio is not null && item.EpisodioFin is not null)
                         {
-                            <p class="episodios">@item.NumeroEpisodios episodios</p>
+                            <p class="episodios">
+                                @item.EpisodiosVistos.Count / @item.TotalEpisodiosRango vistos
+                                (Cap. @item.EpisodioInicio–@item.EpisodioFin)
+                            </p>
+                            <div class="episodios-grid">
+                                @for (int ep = item.EpisodioInicio.Value; ep <= item.EpisodioFin.Value; ep++)
+                                {
+                                    var epNum = ep; // captura local, necesaria en for de Razor
+                                    <label class="ep-check" title="Episodio @epNum">
+                                        <input type="checkbox"
+                                               checked="@item.EpisodiosVistos.Contains(epNum)"
+                                               @onchange="e => MarcarEpisodio(item, epNum, (bool)e.Value!)" />
+                                        @epNum
+                                    </label>
+                                }
+                            </div>
                         }
-                        <label class="visto-check">
-                            <input type="checkbox" checked="@item.Visto" @onchange="e => MarcarVisto(item, (bool)e.Value!)" />
-                            Vista
-                        </label>
+                        else
+                        {
+                            <label class="visto-check">
+                                <input type="checkbox" checked="@item.Visto" @onchange="e => MarcarVisto(item, (bool)e.Value!)" />
+                                Vista
+                            </label>
+                        }
+
                         <div class="card-actions">
                             <button class="btn-edit" @onclick="() => Editar(item.Id)">Editar</button>
-                            <button class="btn-delete" @onclick="() => Eliminar(item.Id)">Eliminar</button>
+                            <button class="btn-delete" @onclick="() => Eliminar(item.Id, item.Titulo)">Eliminar</button>
                         </div>
                     </div>
                 </div>
@@ -77,9 +98,11 @@ else
         : filtro is null ? items
         : items.Where(i => i.Tipo == filtro);
 
-    private int vistos => items?.Count(i => i.Visto) ?? 0;
-    private int pendientes => (items?.Count ?? 0) - vistos;
-    private int porcentaje => (items is null || items.Count == 0) ? 0 : (int)Math.Round(vistos * 100.0 / items.Count);
+    // Progreso ponderado: 1 unidad por pelicula, N unidades (capitulos del rango) por serie
+    private int totalUnidades => items?.Sum(i => i.TotalUnidades) ?? 0;
+    private int unidadesVistas => items?.Sum(i => i.UnidadesVistas) ?? 0;
+    private int pendientes => totalUnidades - unidadesVistas;
+    private int porcentaje => totalUnidades == 0 ? 0 : (int)Math.Round(unidadesVistas * 100.0 / totalUnidades);
 
     protected override async Task OnInitializedAsync()
     {
@@ -98,8 +121,26 @@ else
         await Storage.UpdateAsync(item);
     }
 
-    private async Task Eliminar(Guid id)
+    private async Task MarcarEpisodio(WatchlistItem item, int episodio, bool marcado)
     {
+        if (marcado)
+        {
+            if (!item.EpisodiosVistos.Contains(episodio))
+                item.EpisodiosVistos.Add(episodio);
+        }
+        else
+        {
+            item.EpisodiosVistos.Remove(episodio);
+        }
+        await Storage.UpdateAsync(item);
+    }
+
+    private async Task Eliminar(Guid id, string titulo)
+    {
+        var confirmado = await JS.InvokeAsync<bool>("confirm", $"¿Eliminar \"{titulo}\" de tu watchlist?");
+        if (!confirmado)
+            return;
+
         await Storage.DeleteAsync(id);
         items = await Storage.GetAllAsync();
     }
