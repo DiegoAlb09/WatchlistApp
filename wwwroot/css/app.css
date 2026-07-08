@@ -336,3 +336,36 @@ h1 { font-size: 1.6rem; margin: 0; }
     bottom: 0;
     width: 100%;
 }
+
+.seccion-completados { 
+    font-size: 1rem;
+    color: var(--muted);
+    margin: 24px 0 10px;
+}
+.completados-compactos {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.card-compacto {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--card-bg);
+    border-radius: 8px;
+    padding: 8px 12px; 
+    font-size: 0.85rem;
+}
+.check-ok {
+    color: #2ecc71;
+}
+.titulo-compacto {
+    flex: 1;
+    color: var(--text);
+}
+.btn-edit-mini, btn-delete-mini {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9rem;
+}

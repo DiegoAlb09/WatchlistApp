@@ -29,6 +29,9 @@ else
         <button class="@(filtro == null ? "filtro-activo" : "")" @onclick="() => AplicarFiltro(null)">Todo</button>
         <button class="@(filtro == TipoContenido.Serie ? "filtro-activo" : "")" @onclick="() => AplicarFiltro(TipoContenido.Serie)">Solo series</button>
         <button class="@(filtro == TipoContenido.Pelicula ? "filtro-activo" : "")" @onclick="() => AplicarFiltro(TipoContenido.Pelicula)">Solo películas</button>
+        <button class="@(compactarCompletados ? "filtro-activo" : "")" @onclick="() => compactarCompletados = !compactarCompletados">
+            @(compactarCompletados ? "Mostrar completos" : "Compactar completos")
+        </button>
     </div>
 
     @if (!ItemsFiltrados.Any())
@@ -37,66 +40,98 @@ else
     }
     else
     {
-        <div class="grid">
-            @foreach (var item in ItemsFiltrados)
-            {
-                <div class="card">
-                    <div class="cover" style="background-image:url('@item.PortadaUrl')">
-                        @if (string.IsNullOrWhiteSpace(item.PortadaUrl))
-                        {
-                            <span class="no-cover">🎞️</span>
-                        }
-                    </div>
-                    <div class="card-body">
-                        <h3>@item.Titulo</h3>
-                        <p class="tipo-tag">@(item.Tipo == TipoContenido.Serie ? "Serie" : "Película")</p>
+        @if (!Pendientes.Any() && !Completados.Any())
+        {
+            <p class="empty-msg">No hay nada en esta categoría.</p>
+        }
 
-                        @if (item.Tipo == TipoContenido.Serie && item.EpisodioInicio is not null && item.EpisodioFin is not null)
-                        {
-                            <p class="episodios">
-                                @item.EpisodiosVistos.Count / @item.TotalEpisodiosRango vistos
-                                (Cap. @item.EpisodioInicio–@item.EpisodioFin)
-                            </p>
-                            <div class="episodios-grid">
-                                @for (int ep = item.EpisodioInicio.Value; ep <= item.EpisodioFin.Value; ep++)
-                                {
-                                    var epNum = ep; // captura local, necesaria en for de Razor
-                                    <label class="ep-check" title="Episodio @epNum">
-                                        <input type="checkbox"
-                                               checked="@item.EpisodiosVistos.Contains(epNum)"
-                                               @onchange="e => MarcarEpisodio(item, epNum, (bool)e.Value!)" />
-                                        @epNum
-                                    </label>
-                                }
+        @if (Pendientes.Any())
+        {
+            <div class="grid">
+                @foreach (var item in Pendientes)
+                {
+                    <div class="card">
+                        <div class="cover" style="background-image:url('@item.PortadaUrl')">
+                            @if (string.IsNullOrWhiteSpace(item.PortadaUrl))
+                            {
+                                <span class="no-cover">🎞️</span>
+                            }
+                        </div>
+                        <div class="card-body">
+                            <h3>@item.Titulo</h3>
+                            <p class="tipo-tag">@(item.Tipo == TipoContenido.Serie ? "Serie" : "Película")</p>
+
+                            @if (item.Tipo == TipoContenido.Serie && item.EpisodioInicio is not null && item.EpisodioFin is not null)
+                            {
+                                <p class="episodios">
+                                    @item.EpisodiosVistos.Count / @item.TotalEpisodiosRango vistos
+                                    (Cap. @item.EpisodioInicio–@item.EpisodioFin)
+                                </p>
+                                <div class="episodios-grid">
+                                    @for (int ep = item.EpisodioInicio.Value; ep <= item.EpisodioFin.Value; ep++)
+                                    {
+                                        var epNum = ep;
+                                        <label class="ep-check" title="Episodio @epNum">
+                                            <input type="checkbox"
+                                                   checked="@item.EpisodiosVistos.Contains(epNum)"
+                                                   @onchange="e => MarcarEpisodio(item, epNum, (bool)e.Value!)" />
+                                            @epNum
+                                        </label>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <label class="visto-check">
+                                    <input type="checkbox" checked="@item.Visto" @onchange="e => MarcarVisto(item, (bool)e.Value!)" />
+                                    Vista
+                                </label>
+                            }
+
+                            <div class="card-actions">
+                                <button class="btn-edit" @onclick="() => Editar(item.Id)">Editar</button>
+                                <button class="btn-delete" @onclick="() => Eliminar(item.Id, item.Titulo)">Eliminar</button>
                             </div>
-                        }
-                        else
-                        {
-                            <label class="visto-check">
-                                <input type="checkbox" checked="@item.Visto" @onchange="e => MarcarVisto(item, (bool)e.Value!)" />
-                                Vista
-                            </label>
-                        }
-
-                        <div class="card-actions">
-                            <button class="btn-edit" @onclick="() => Editar(item.Id)">Editar</button>
-                            <button class="btn-delete" @onclick="() => Eliminar(item.Id, item.Titulo)">Eliminar</button>
                         </div>
                     </div>
-                </div>
-            }
-        </div>
+                }
+            </div>
+        }
+
+        @if (compactarCompletados && Completados.Any())
+        {
+            <h2 class="seccion-completados">✔ Completados</h2>
+            <div class="completados-compactos">
+                @foreach (var item in Completados)
+                {
+                    <div class="card-compacto">
+                        <span class="check-ok">✔</span>
+                        <span class="titulo-compacto">@item.Titulo</span>
+                        <button class="btn-edit-mini" title="Editar" @onclick="() => Editar(item.Id)">✏️</button>
+                        <button class="btn-delete-mini" title="Eliminar" @onclick="() => Eliminar(item.Id, item.Titulo)">🗑️</button>
+                    </div>
+                }
+            </div>
+        }
     }
 }
 
 @code {
     private List<WatchlistItem>? items;
     private TipoContenido? filtro = null;
+    private bool compactarCompletados = false;
 
     private IEnumerable<WatchlistItem> ItemsFiltrados =>
         items is null ? Enumerable.Empty<WatchlistItem>()
         : filtro is null ? items
         : items.Where(i => i.Tipo == filtro);
+
+    // Si el toggle esta activo, los completados salen de la grilla y se muestran compactos aparte
+    private IEnumerable<WatchlistItem> Pendientes =>
+        ItemsFiltrados.Where(i => !(compactarCompletados && i.EstaCompleta));
+
+    private IEnumerable<WatchlistItem> Completados =>
+        compactarCompletados ? ItemsFiltrados.Where(i => i.EstaCompleta) : Enumerable.Empty<WatchlistItem>();
 
     // Progreso ponderado: 1 unidad por pelicula, N unidades (capitulos del rango) por serie
     private int totalUnidades => items?.Sum(i => i.TotalUnidades) ?? 0;
