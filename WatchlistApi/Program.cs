@@ -1,23 +1,31 @@
+using Microsoft.EntityFrameworkCore;
+using WatchlistApi.Data;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+//Puerto fijo para que el cliente Blazor sepa siempre a donde apuntar
+builder.WebHost.UseUrls("http://localhost:5250");
 
-builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+builder.Services.AddControllers()
+    .AddJsonOptions(o => o.JsonSerializerOptions.PropertyNamingPolicy = null);
+
+builder.Services.AddDbContext<AppDbContext>(opt =>
+    opt.UseSqlite("Data Source=watchlist.db"));
+
+// CORS abierto: valido para desarrollo local. Si algun dia se publica el backend
+// a internet, esto deberia restringirse a los origenes reales del frontend
+builder.Services.AddCors(opt => 
+    opt.AddPolicy("DevCors", p => p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+using (var scope = app.Services.CreateScope())
 {
-    app.MapOpenApi();
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.EnsureCreated();
 }
 
-app.UseHttpsRedirection();
-
-app.UseAuthorization();
-
+app.UseCors("DevCors");
 app.MapControllers();
 
 app.Run();
