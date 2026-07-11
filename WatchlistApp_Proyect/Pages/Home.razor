@@ -1,4 +1,5 @@
 ﻿@page "/"
+@using System.Text.Json
 @inject LocalStorageService Storage
 @inject NavigationManager Nav
 @inject IJSRuntime JS
@@ -26,25 +27,34 @@ else
     </div>
 
     <div class="filters">
-        <button class="@(filtro == null ? "filtro-activo" : "")" @onclick="() => AplicarFiltro(null)">Todo</button>
+        <button class="@(filtro == null ? "filtro-activo" : "")" @onclick='() => AplicarFiltro(null)'>Todo</button>
         <button class="@(filtro == TipoContenido.Serie ? "filtro-activo" : "")" @onclick="() => AplicarFiltro(TipoContenido.Serie)">Solo series</button>
         <button class="@(filtro == TipoContenido.Pelicula ? "filtro-activo" : "")" @onclick="() => AplicarFiltro(TipoContenido.Pelicula)">Solo películas</button>
-        <button class="@(compactarCompletados ? "filtro-activo" : "")" @onclick="() => compactarCompletados = !compactarCompletados">
+        <button class="@(compactarCompletados ? "filtro-activo" : "")" @onclick="ToggleCompactar">
             @(compactarCompletados ? "Mostrar completos" : "Compactar completos")
         </button>
     </div>
 
+    <div class="search-sort">
+        <input type="text" class="search-input" placeholder="Buscar por título..." value="@busqueda" @oninput="OnBusquedaChanged" />
+        <select class="sort-select" value="@orden" @onchange="OnOrdenChanged">
+            <option value="reciente">Más recientes primero</option>
+            <option value="antiguos">Más antiguos primero</option>
+            <option value="titulo-az">Título A-Z</option>
+            <option value="titulo-za">Título Z-A</option>
+        </select>
+    </div>
+
     @if (!ItemsFiltrados.Any())
     {
-        <p class="empty-msg">Aún no has agregado nada. ¡Presiona "Agregar" para empezar!</p>
+        <p class="empty-msg">
+            @(items.Count == 0
+                ? "Aún no has agregado nada. ¡Presiona \"Agregar\" para empezar!"
+                : "Nada coincide con tu búsqueda/filtro.")
+        </p>
     }
     else
     {
-        @if (!Pendientes.Any() && !Completados.Any())
-        {
-            <p class="empty-msg">No hay nada en esta categoría.</p>
-        }
-
         @if (Pendientes.Any())
         {
             <div class="grid">
@@ -73,8 +83,8 @@ else
                                         var epNum = ep;
                                         <label class="ep-check" title="Episodio @epNum">
                                             <input type="checkbox"
-                                                   checked="@item.EpisodiosVistos.Contains(epNum)"
-                                                   @onchange="e => MarcarEpisodio(item, epNum, (bool)e.Value!)" />
+                                                checked="@item.EpisodiosVistos.Contains(epNum)"
+                                                @onchange="e => MarcarEpisodio(item, epNum, (bool)e.Value!)" />
                                             @epNum
                                         </label>
                                     }
@@ -117,14 +127,42 @@ else
 }
 
 @code {
+    private const string PrefsKey = "watchlist-ui-prefs";
+
     private List<WatchlistItem>? items;
     private TipoContenido? filtro = null;
     private bool compactarCompletados = false;
+    private string busqueda = "";
+    private string orden = "reciente";
 
-    private IEnumerable<WatchlistItem> ItemsFiltrados =>
-        items is null ? Enumerable.Empty<WatchlistItem>()
-        : filtro is null ? items
-        : items.Where(i => i.Tipo == filtro);
+    private class PreferenciasUI
+    {
+        public TipoContenido? Filtro { get; set; }
+        public bool CompactarCompletados { get; set; }
+        public string? Busqueda { get; set; }
+        public string? Orden { get; set; }
+    }
+
+    private IEnumerable<WatchlistItem> ItemsFiltrados
+    {
+        get
+        {
+            if (items is null) return Enumerable.Empty<WatchlistItem>();
+
+            var lista = items.Where(i => filtro is null || i.Tipo == filtro);
+
+            if (!string.IsNullOrWhiteSpace(busqueda))
+                lista = lista.Where(i => i.Titulo.Contains(busqueda, StringComparison.OrdinalIgnoreCase));
+
+            return orden switch
+            {
+                "titulo-az" => lista.OrderBy(i => i.Titulo, StringComparer.OrdinalIgnoreCase),
+                "titulo-za" => lista.OrderByDescending(i => i.Titulo, StringComparer.OrdinalIgnoreCase),
+                "antiguos" => lista.OrderBy(i => i.FechaAgregado),
+                _ => lista.OrderByDescending(i => i.FechaAgregado),
+            };
+        }
+    }
 
     private IEnumerable<WatchlistItem> Pendientes =>
         ItemsFiltrados.Where(i => !(compactarCompletados && i.EstaCompleta));
@@ -139,14 +177,71 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        await CargarPreferenciasAsync();
         items = await Storage.GetAllAsync();
+    }
+
+    private async Task CargarPreferenciasAsync()
+    {
+        try
+        {
+            var json = await JS.InvokeAsync<string?>("localStorage.getItem", PrefsKey);
+            if (string.IsNullOrWhiteSpace(json)) return;
+
+            var prefs = JsonSerializer.Deserialize<PreferenciasUI>(json);
+            if (prefs is null) return;
+
+            filtro = prefs.Filtro;
+            compactarCompletados = prefs.CompactarCompletados;
+            busqueda = prefs.Busqueda ?? "";
+            orden = prefs.Orden ?? "reciente";
+        }
+        catch
+        {
+            // Preferencias corruptas o inexistentes: se usan los valores por defecto.
+        }
+    }
+
+    private async Task GuardarPreferenciasAsync()
+    {
+        var prefs = new PreferenciasUI
+        {
+            Filtro = filtro,
+            CompactarCompletados = compactarCompletados,
+            Busqueda = busqueda,
+            Orden = orden
+        };
+        var json = JsonSerializer.Serialize(prefs);
+        await JS.InvokeVoidAsync("localStorage.setItem", PrefsKey, json);
     }
 
     private void IrAAgregar() => Nav.NavigateTo("/agregar");
 
     private void Editar(Guid id) => Nav.NavigateTo($"/agregar/{id}");
 
-    private void AplicarFiltro(TipoContenido? tipo) => filtro = tipo;
+    private async Task AplicarFiltro(TipoContenido? tipo)
+    {
+        filtro = tipo;
+        await GuardarPreferenciasAsync();
+    }
+
+    private async Task ToggleCompactar()
+    {
+        compactarCompletados = !compactarCompletados;
+        await GuardarPreferenciasAsync();
+    }
+
+    private async Task OnBusquedaChanged(ChangeEventArgs e)
+    {
+        busqueda = e.Value?.ToString() ?? "";
+        await GuardarPreferenciasAsync();
+    }
+
+    private async Task OnOrdenChanged(ChangeEventArgs e)
+    {
+        orden = e.Value?.ToString() ?? "reciente";
+        await GuardarPreferenciasAsync();
+    }
 
     private async Task MarcarVisto(WatchlistItem item, bool valor)
     {
