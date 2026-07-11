@@ -1,3 +1,4 @@
+using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.JSInterop;
 using WatchlistApp_Proyect.Models;
@@ -6,58 +7,70 @@ namespace WatchlistApp_Proyect.Services;
 
 public class LibraryStorageService
 {
-    private const string StorageKey = "library-items";
-    private readonly IJSRuntime _js;
+    private const string OldStorageKey = "library-items";
+    private const string MigratedFlagKey = "library-items-migrado";
+    private const string ApiBase = "api/libros";
 
-    public LibraryStorageService(IJSRuntime js)
+    private readonly HttpClient _http;
+    private readonly IJSRuntime _js;
+    private bool _migracionRevisada = false;
+
+    public LibraryStorageService(HttpClient http, IJSRuntime js)
     {
+        _http = http;
         _js = js;
+    }
+
+    private async Task AsegurarMigracionAsync()
+    {
+        if (_migracionRevisada) return;
+        _migracionRevisada = true;
+
+        var yaMigrado = await _js.InvokeAsync<string?>("localStorage.getItem", MigratedFlagKey);
+        if (yaMigrado == "true") return;
+
+        var json = await _js.InvokeAsync<string?>("localStorage.getItem", OldStorageKey);
+        if (!string.IsNullOrWhiteSpace(json))
+        {
+            try
+            {
+                var itemsViejos = JsonSerializer.Deserialize<List<LibroItem>>(json) ?? new();
+                if (itemsViejos.Count > 0)
+                {
+                    await _http.PostAsJsonAsync($"{ApiBase}/importar", itemsViejos);
+                }
+            }
+            catch
+            {
+                // JSON viejo corrupto: no bloqueamos la app.
+            }
+        }
+
+        await _js.InvokeVoidAsync("localStorage.setItem", MigratedFlagKey, "true");
     }
 
     public async Task<List<LibroItem>> GetAllAsync()
     {
-        var json = await _js.InvokeAsync<string?>("localStorage.getItem", StorageKey);
-        if (string.IsNullOrWhiteSpace(json))
-            return new List<LibroItem>();
-
-        try
-        {
-            return JsonSerializer.Deserialize<List<LibroItem>>(json) ?? new List<LibroItem>();
-        }
-        catch
-        {
-            return new List<LibroItem>();
-        }
-    }
-
-    public async Task SaveAllAsync(List<LibroItem> items)
-    {
-        var json = JsonSerializer.Serialize(items);
-        await _js.InvokeVoidAsync("localStorage.setItem", StorageKey, json);
+        await AsegurarMigracionAsync();
+        var items = await _http.GetFromJsonAsync<List<LibroItem>>(ApiBase);
+        return items ?? new List<LibroItem>();
     }
 
     public async Task AddAsync(LibroItem item)
     {
-        var items = await GetAllAsync();
-        items.Add(item);
-        await SaveAllAsync(items);
+        await AsegurarMigracionAsync();
+        await _http.PostAsJsonAsync(ApiBase, item);
     }
 
     public async Task UpdateAsync(LibroItem item)
     {
-        var items = await GetAllAsync();
-        var index = items.FindIndex(i => i.Id == item.Id);
-        if (index >= 0)
-        {
-            items[index] = item;
-            await SaveAllAsync(items);
-        }
+        await AsegurarMigracionAsync();
+        await _http.PutAsJsonAsync($"{ApiBase}/{item.Id}", item);
     }
 
     public async Task DeleteAsync(Guid id)
     {
-        var items = await GetAllAsync();
-        items.RemoveAll(i => i.Id == id);
-        await SaveAllAsync(items);
+        await AsegurarMigracionAsync();
+        await _http.DeleteAsync($"{ApiBase}/{id}");
     }
 }
