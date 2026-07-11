@@ -10,3 +10,8 @@ obj/
 ## OS
 .DS_Store
 Thumbs.db
+
+## Base de datos
+watchlist.db
+watchlist.db-shm
+watchlist.db-wal

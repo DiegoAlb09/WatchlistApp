@@ -2,7 +2,7 @@
 
 Aplicación web para llevar el control de series, películas, libros, manga y cómics pendientes por ver/leer. Permite agregar títulos, clasificarlos, llevar un rango o avance de capítulos, y ver el progreso general de tu lista — todo con modo oscuro/claro.
 
-Corre 100% en el navegador — no necesita servidor ni base de datos externa. Todos los datos se guardan localmente en el `localStorage` del navegador.
+Los datos ya **no viven solo en el navegador**: hay un backend real (ASP.NET Core Web API + SQLite) que los guarda de forma persistente. La primera vez que corras la app, cualquier dato que tuvieras en `localStorage` se migra automáticamente al backend, sin borrarse (queda de respaldo).
 
 ---
 
@@ -10,71 +10,105 @@ Corre 100% en el navegador — no necesita servidor ni base de datos externa. To
 
 ### Navegación
 - Navbar superior para cambiar entre la sección **Series/Películas** y **Libros/Manga/Cómics**, cada una con su propio diseño.
-- Botón de **modo oscuro/claro** (☀️/🌙), con la preferencia guardada en `localStorage`.
+- Botón de **modo oscuro/claro** (con ícono), con la preferencia guardada en `localStorage`.
 
 ### 🎬 Series y Películas
-- Barra de progreso general, ponderada por capítulos vistos y películas vistas (no solo por ítems completos).
+- Barra de progreso general, ponderada por capítulos vistos y películas vistas.
 - Filtros: Todo / Solo series / Solo películas.
-- Toggle **"Compactar completos"**: oculta las series/películas ya terminadas de la grilla principal y las muestra como una lista compacta de solo título, para no saturar la vista.
-- Agregar/Editar: título, portada (URL), tipo, y para series un **rango de capítulos** pendientes (ej. del 1169 al 1170) en vez de listar todo desde el capítulo 1 — ideal para series muy largas.
-- Checklist de capítulos dentro del rango definido; para películas, checkbox simple de "Vista".
+- Toggle **"Compactar completos"**: oculta lo ya terminado de la grilla principal, mostrándolo como lista compacta.
+- Agregar/Editar: título, portada (URL), tipo, y para series un **rango de capítulos** pendientes (ej. del 1169 al 1170) — ideal para series muy largas.
+- Checklist de capítulos dentro del rango; para películas, checkbox de "Vista" con diseño propio (cuadro con check, no un pill de ancho completo).
 - Eliminar con confirmación previa.
 
 ### 📚 Libros, Manga y Cómics
 - Diseño de **lista** (distinto al de Series), con portada tipo lomo de libro.
-- Seguimiento por **stepper** (−/+) del capítulo/tomo actual, en vez de checklist — pensado para lecturas donde vas avanzando de forma continua.
+- Seguimiento por **stepper** (−/+) del capítulo/tomo actual.
 - Barra de progreso individual por título (si defines una meta de capítulo/tomo).
 - Filtros por tipo: Libro / Manga / Cómic.
-- Agregar/Editar y Eliminar con confirmación, igual que en Series.
+
+### Interfaz
+- Íconos SVG (Heroicons) en vez de emojis, en un componente `Icon.razor` reutilizable.
+- Inputs de formularios con estilo propio y estado de foco visible.
 
 ### Persistencia
-- Todo se guarda en `localStorage` vía JS interop — no se pierde al recargar la página, pero **es exclusivo del navegador/dispositivo donde lo usas**. Series/Películas y Libros/Manga/Cómics se guardan bajo claves separadas.
+- **Backend real**: ASP.NET Core Web API + Entity Framework Core + SQLite (`watchlist.db`).
+- La app migra automáticamente los datos viejos de `localStorage` al backend la primera vez que corre (sin borrar el respaldo local).
+- Series/Películas y Libros/Manga/Cómics tienen sus propias tablas y endpoints.
 
 ---
 
 ## 🛠️ Tecnología
 
+**Frontend**
 - [Blazor WebAssembly](https://learn.microsoft.com/aspnet/core/blazor/) (.NET 8)
 - C# + Razor Components
-- `localStorage` del navegador para persistencia (sin backend)
-- CSS puro con variables (sin frameworks externos) — permite el modo oscuro/claro
+- CSS puro con variables (modo oscuro/claro)
+
+**Backend**
+- ASP.NET Core Web API (.NET 8)
+- Entity Framework Core + SQLite
+- CORS abierto para desarrollo local (sin autenticación todavía)
 
 ---
 
 ## ▶️ Cómo correrlo localmente
 
-Requiere el [.NET SDK 8.0](https://dotnet.microsoft.com/download).
+Requiere el [.NET SDK 8.0](https://dotnet.microsoft.com/download). Se necesitan **dos terminales abiertas al mismo tiempo**.
 
+**Terminal 1 — Backend:**
 ```bash
+cd WatchlistApi
+dotnet restore
+dotnet run
+```
+Debe quedar escuchando en `http://localhost:5250`. La base de datos `watchlist.db` se crea sola la primera vez.
+
+**Terminal 2 — Frontend:**
+```bash
+cd WatchlistApp_Proyect
 dotnet restore
 dotnet watch run
 ```
+Abre en el navegador la URL que muestre la terminal (ej. `http://localhost:5224`).
 
-Abre en el navegador la URL que muestre la terminal (ej. `http://localhost:5231`).
+> ⚠️ Si el backend no está corriendo, el frontend va a fallar al cargar los datos (error de red/CORS en la consola del navegador).
 
 ---
 
-## 📁 Estructura del proyecto
+## 📁 Estructura del proyecto (monorepo)
 
 ```
-WatchlistApp/
-├── Models/
-│   ├── WatchlistItem.cs         # Serie/pelicula: rango de capitulos, checklist, etc.
-│   └── LibroItem.cs             # Libro/manga/comic: capitulo actual, meta, etc.
-├── Services/
-│   ├── LocalStorageService.cs   # Guarda/lee Series y Peliculas (clave "watchlist-items")
-│   └── LibraryStorageService.cs # Guarda/lee Libros/Manga/Comics (clave "library-items")
-├── Pages/
-│   ├── Home.razor               # Inicio: Series y Peliculas
-│   ├── AddItem.razor            # Agregar/editar Serie o Pelicula
-│   ├── Libros.razor             # Inicio: Libros, Manga y Comics
-│   └── AgregarLibro.razor       # Agregar/editar Libro, Manga o Comic
-├── Shared/
-│   └── MainLayout.razor         # Navbar + boton de tema oscuro/claro
-├── wwwroot/
-│   ├── css/app.css              # Estilos con variables de tema
-│   └── js/theme.js              # JS interop para el tema oscuro/claro
-└── Program.cs
+Watchlist/                       ← raíz del repo (.git aquí)
+├── WatchlistApp_Proyect/        ← Frontend (Blazor WebAssembly)
+│   ├── Models/
+│   │   ├── WatchlistItem.cs
+│   │   └── LibroItem.cs
+│   ├── Services/
+│   │   ├── LocalStorageService.cs    # ahora habla con el backend + migra localStorage
+│   │   └── LibraryStorageService.cs
+│   ├── Pages/
+│   │   ├── Home.razor
+│   │   ├── AddItem.razor
+│   │   ├── Libros.razor
+│   │   └── AgregarLibro.razor
+│   ├── Shared/
+│   │   ├── MainLayout.razor
+│   │   └── Icon.razor
+│   └── wwwroot/
+│       ├── css/app.css
+│       └── js/theme.js
+│
+└── WatchlistApi/                ← Backend (ASP.NET Core Web API)
+    ├── Models/
+    │   ├── WatchlistItemEntity.cs
+    │   └── LibroItemEntity.cs
+    ├── Data/
+    │   └── AppDbContext.cs
+    ├── Controllers/
+    │   ├── WatchlistController.cs
+    │   └── LibrosController.cs
+    ├── Program.cs
+    └── watchlist.db              # se genera solo, no se sube al repo (.gitignore)
 ```
 
 ---
@@ -82,32 +116,33 @@ WatchlistApp/
 ## 🚀 Roadmap — próximos pasos
 
 ### Corto plazo
+- [ ] Diseñar los `InputText`/`InputNumber` restantes con más detalle (ya se mejoró el foco, falta pulir bordes/sombras).
 - [ ] Subir portada como archivo local (base64) en vez de solo URL.
 - [ ] Ordenar/buscar dentro de la lista.
 - [ ] Recordar el filtro activo y el estado de "compactar completos" entre sesiones.
 
-### Publicar la página (acceso público)
-Actualmente el proyecto solo corre en `localhost`. Para que otras personas puedan usarlo desde internet:
-- [ ] Publicar como sitio estático en **GitHub Pages** (Blazor WASM es 100% estático, se puede alojar gratis ahí).
-- [ ] Alternativa: desplegar en **Azure Static Web Apps** (tiene un tier gratuito y soporta Blazor WASM directamente).
-- [ ] Configurar el `base href` en `index.html` según la ruta del deploy (necesario para que las rutas funcionen en GitHub Pages).
+### Publicar el backend y el frontend (acceso público)
+Actualmente ambos proyectos solo corren en `localhost`. Para que otras personas puedan usar la app desde internet:
+- [ ] Publicar el **backend** en un hosting que soporte ASP.NET Core (Azure App Service, Render, Railway, etc.) — ya no es un sitio estático, necesita servidor corriendo.
+- [ ] Publicar el **frontend** (Blazor WASM sigue siendo estático) en GitHub Pages o Azure Static Web Apps, apuntando su `HttpClient` a la URL pública del backend.
+- [ ] Restringir el CORS del backend a la URL real del frontend publicado (ahora mismo está abierto con `AllowAnyOrigin`, válido solo para desarrollo local).
+- [ ] Cambiar la base de datos de SQLite a algo compatible con el hosting elegido si hace falta (SQLite funciona bien para un solo usuario/proyecto personal; para más tráfico conviene PostgreSQL o Azure SQL).
 
 ### Login y sincronización entre dispositivos
-Hoy la watchlist vive solo en el `localStorage` de un navegador — si abres la app en el celular o en otra computadora, no vas a ver la misma lista. Para resolver esto se necesita un cambio de arquitectura más grande:
-- [ ] Agregar un **backend** (ej. ASP.NET Core Web API) con una base de datos real (SQLite, PostgreSQL, o Azure SQL) en vez de `localStorage`.
+Con el backend ya en pie, este es el siguiente paso natural:
 - [ ] Sistema de **autenticación** (login) — opciones a evaluar:
-  - ASP.NET Core Identity (email + contraseña, todo dentro del mismo ecosistema .NET).
-  - Login con Google/GitHub (OAuth), más rápido de implementar y sin manejar contraseñas.
-- [ ] Cada usuario autenticado ve solo su propia watchlist, guardada en el servidor.
-- [ ] Migrar los datos que ya existen en `localStorage` a la cuenta del usuario la primera vez que inicie sesión (para no perder lo que ya tenía).
-- [ ] Esto implica pasar de una app 100% estática a una con backend — ya no bastaría con GitHub Pages, se necesitaría un hosting que soporte el servidor (Azure App Service, Render, Railway, etc.).
+  - ASP.NET Core Identity (email + contraseña).
+  - Login con Google/GitHub (OAuth).
+- [ ] Relacionar cada `WatchlistItemEntity`/`LibroItemEntity` con un usuario (agregar `UserId` a las tablas).
+- [ ] Cada usuario autenticado ve solo su propia watchlist.
+- [ ] Proteger los endpoints del backend (hoy son públicos, cualquiera con la URL puede leer/escribir).
 
 ### Otras ideas a futuro
 - [ ] Estadísticas (ej. cuántas series/libros completaste este mes).
-- [ ] Notas personales por título (ej. "dejé de ver en el capítulo X porque...").
-- [ ] Exportar/importar la watchlist como archivo JSON (respaldo manual mientras no haya cuentas).
+- [ ] Notas personales por título.
+- [ ] Reemplazar los emojis restantes (si quedara alguno) por íconos de Heroicons.
 
 ---
 
 ## 👤 Autor
-Diego Alberto Aranda Gonzalez — Proyecto Personal, Ingeniería en Computación Inteligente.
+Diego Alberto Aranda Gonzalez — Proyecto personal, Ingeniería en Computación Inteligente, UAA.
