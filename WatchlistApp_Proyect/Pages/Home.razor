@@ -34,6 +34,7 @@ else
             @onclick="() => AplicarFiltro(TipoContenido.Serie)">Solo series</button>
     <button class="@(filtro == TipoContenido.Pelicula ? "filtro-activo" : "")"
             @onclick="() => AplicarFiltro(TipoContenido.Pelicula)">Solo películas</button>
+    <button class="@(soloEnProgreso ? "filtro-activo" : "")" @onclick="ToggleEnProgreso">En progreso</button>
     <button class="@(compactarCompletados ? "filtro-activo" : "")" @onclick="ToggleCompactar">
       @(compactarCompletados ? "Mostrar completos" : "Compactar completos")
     </button>
@@ -45,6 +46,7 @@ else
     <select class="sort-select" value="@orden" @onchange="OnOrdenChanged">
       <option value="reciente">Más recientes primero</option>
       <option value="antiguos">Más antiguos primero</option>
+      <option value="avance">Más avanzados primero</option>
       <option value="titulo-az">Título A-Z</option>
       <option value="titulo-za">Título Z-A</option>
     </select>
@@ -148,6 +150,7 @@ else
   private List<WatchlistItem>? items;
   private TipoContenido? filtro = null;
   private bool compactarCompletados = false;
+  private bool soloEnProgreso = false;
   private string busqueda = "";
   private string orden = "reciente";
 
@@ -155,9 +158,14 @@ else
   {
     public TipoContenido? Filtro { get; set; }
     public bool CompactarCompletados { get; set; }
+    public bool SoloEnProgreso { get; set; }
     public string? Busqueda { get; set; }
     public string? Orden { get; set; }
   }
+
+  // Avance de 0.0 a 1.0. Peliculas: 0 o 1. Series: EpisodiosVistos / TotalEpisodiosRango.
+  private static double Avance(WatchlistItem i) =>
+      i.TotalUnidades == 0 ? 0 : (double)i.UnidadesVistas / i.TotalUnidades;
 
   private IEnumerable<WatchlistItem> ItemsFiltrados
   {
@@ -167,6 +175,9 @@ else
 
       var lista = items.Where(i => filtro is null || i.Tipo == filtro);
 
+      if (soloEnProgreso)
+        lista = lista.Where(i => !i.EstaCompleta && i.UnidadesVistas > 0);
+
       if (!string.IsNullOrWhiteSpace(busqueda))
         lista = lista.Where(i => i.Titulo.Contains(busqueda, StringComparison.OrdinalIgnoreCase));
 
@@ -175,6 +186,7 @@ else
         "titulo-az" => lista.OrderBy(i => i.Titulo, StringComparer.OrdinalIgnoreCase),
         "titulo-za" => lista.OrderByDescending(i => i.Titulo, StringComparer.OrdinalIgnoreCase),
         "antiguos" => lista.OrderBy(i => i.FechaAgregado),
+        "avance" => lista.OrderByDescending(Avance).ThenByDescending(i => i.FechaAgregado),
         _ => lista.OrderByDescending(i => i.FechaAgregado),
       };
     }
@@ -209,6 +221,7 @@ else
 
       filtro = prefs.Filtro;
       compactarCompletados = prefs.CompactarCompletados;
+      soloEnProgreso = prefs.SoloEnProgreso;
       busqueda = prefs.Busqueda ?? "";
       orden = prefs.Orden ?? "reciente";
     }
@@ -224,6 +237,7 @@ else
     {
       Filtro = filtro,
       CompactarCompletados = compactarCompletados,
+      SoloEnProgreso = soloEnProgreso,
       Busqueda = busqueda,
       Orden = orden
     };
@@ -244,6 +258,12 @@ else
   private async Task ToggleCompactar()
   {
     compactarCompletados = !compactarCompletados;
+    await GuardarPreferenciasAsync();
+  }
+
+  private async Task ToggleEnProgreso()
+  {
+    soloEnProgreso = !soloEnProgreso;
     await GuardarPreferenciasAsync();
   }
 

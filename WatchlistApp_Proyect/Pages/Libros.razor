@@ -7,7 +7,7 @@
 <div class="libros-theme">
   <div class="header">
     <h1>
-      <Icon Name="book" />Libros, Manga y Cómics
+      <Icon Name="book" /> Libros, Manga y Cómics
     </h1>
     <button class="btn-add" @onclick="IrAAgregar">+ Agregar</button>
   </div>
@@ -19,20 +19,23 @@
   else
   {
     <div class="filters">
-      <button class="@(filtro == null ? "filtro-activo" : "")" @onclick="() => filtro = null">Todo</button>
+      <button class="@(filtro == null ? "filtro-activo" : "")" @onclick="() => AplicarFiltro(null)">Todo</button>
       <button class="@(filtro == TipoLibro.Libro ? "filtro-activo" : "")"
-              @onclick="() => filtro = TipoLibro.Libro">Libros</button>
+              @onclick="() => AplicarFiltro(TipoLibro.Libro)">Libros</button>
       <button class="@(filtro == TipoLibro.Manga ? "filtro-activo" : "")"
-              @onclick="() => filtro = TipoLibro.Manga">Manga</button>
+              @onclick="() => AplicarFiltro(TipoLibro.Manga)">Manga</button>
       <button class="@(filtro == TipoLibro.Comic ? "filtro-activo" : "")"
-              @onclick="() => filtro = TipoLibro.Comic">Cómics</button>
+              @onclick="() => AplicarFiltro(TipoLibro.Comic)">Cómics</button>
+      <button class="@(soloEnProgreso ? "filtro-activo" : "")" @onclick="ToggleEnProgreso">En progreso</button>
     </div>
 
     <div class="search-sort">
-      <input type="text" class="search-input" placeholder="Buscar por título..." value="@busqueda" @oninput="OnBusquedaChanged" />
+      <input type="text" class="search-input" placeholder="Buscar por título..." value="@busqueda"
+             @oninput="OnBusquedaChanged" />
       <select class="sort-select" value="@orden" @onchange="OnOrdenChanged">
         <option value="reciente">Más recientes primero</option>
         <option value="antiguos">Más antiguos primero</option>
+        <option value="avance">Más avanzados primero</option>
         <option value="titulo-az">Título A-Z</option>
         <option value="titulo-za">Título Z-A</option>
       </select>
@@ -40,7 +43,9 @@
 
     @if (!ItemsFiltrados.Any())
     {
-      <p class="empty-msg">Aún no has agregado nada.</p>
+      <p class="empty-msg">
+        @(items.Count == 0 ? "Aún no has agregado nada." : "Nada coincide con tu búsqueda/filtro.")
+      </p>
     }
     else
     {
@@ -51,9 +56,7 @@
             <div class="libro-cover" style="background-image:url('@libro.PortadaUrl')">
               @if (string.IsNullOrWhiteSpace(libro.PortadaUrl))
               {
-                <span class="no-cover">
-                  <Icon Name="photo" />
-                </span>
+                <Icon Name="photo" />
               }
             </div>
             <div class="libro-info">
@@ -61,16 +64,12 @@
               <p class="tipo-tag">@libro.Tipo</p>
 
               <div class="stepper">
-                <button @onclick="() => CambiarCapitulo(libro, -1)">
-                  <Icon Name="minus" />
-                </button>
+                <button @onclick="() => CambiarCapitulo(libro, -1)">−</button>
                 <span>
                   Cap. @libro.CapituloActual
                   @(libro.CapituloFin is not null ? $" / {libro.CapituloFin}" : "")
                 </span>
-                <button @onclick="() => CambiarCapitulo(libro, 1)">
-                  <Icon Name="plus" />
-                </button>
+                <button @onclick="() => CambiarCapitulo(libro, 1)">+</button>
               </div>
 
               @if (libro.Porcentaje is not null)
@@ -82,10 +81,10 @@
             </div>
             <div class="libro-actions">
               <button class="btn-edit" @onclick="() => Editar(libro.Id)">
-                <Icon Name="pencil" />Editar
+                <Icon Name="pencil" /><span>Editar</span>
               </button>
               <button class="btn-delete" @onclick="() => Eliminar(libro.Id, libro.Titulo)">
-                <Icon Name="trash" />Eliminar
+                <Icon Name="trash" /><span>Eliminar</span>
               </button>
             </div>
           </div>
@@ -96,25 +95,36 @@
 </div>
 
 @code {
-  private const string PrefsKey = "Libros-ui-prefs";
+  private const string PrefsKey = "libros-ui-prefs";
+
   private List<LibroItem>? items;
   private TipoLibro? filtro;
+  private bool soloEnProgreso = false;
   private string busqueda = "";
   private string orden = "reciente";
 
   private class PreferenciasUI
   {
     public TipoLibro? Filtro { get; set; }
+    public bool SoloEnProgreso { get; set; }
     public string? Busqueda { get; set; }
     public string? Orden { get; set; }
   }
+
+  // Los que no tienen meta definida (CapituloFin null -> Porcentaje null) se consideran
+  // "sin avance cuantificable" y quedan al final al ordenar por avance.
+  private static double AvanceOrdenable(LibroItem i) => i.Porcentaje ?? -1;
 
   private IEnumerable<LibroItem> ItemsFiltrados
   {
     get
     {
       if (items is null) return Enumerable.Empty<LibroItem>();
+
       var lista = items.Where(i => filtro is null || i.Tipo == filtro);
+
+      if (soloEnProgreso)
+        lista = lista.Where(i => !i.EstaCompleta && i.CapitulosLeidos > 0);
 
       if (!string.IsNullOrWhiteSpace(busqueda))
         lista = lista.Where(i => i.Titulo.Contains(busqueda, StringComparison.OrdinalIgnoreCase));
@@ -124,6 +134,7 @@
         "titulo-az" => lista.OrderBy(i => i.Titulo, StringComparer.OrdinalIgnoreCase),
         "titulo-za" => lista.OrderByDescending(i => i.Titulo, StringComparer.OrdinalIgnoreCase),
         "antiguos" => lista.OrderBy(i => i.FechaAgregado),
+        "avance" => lista.OrderByDescending(AvanceOrdenable).ThenByDescending(i => i.FechaAgregado),
         _ => lista.OrderByDescending(i => i.FechaAgregado),
       };
     }
@@ -146,18 +157,19 @@
       if (prefs is null) return;
 
       filtro = prefs.Filtro;
+      soloEnProgreso = prefs.SoloEnProgreso;
       busqueda = prefs.Busqueda ?? "";
       orden = prefs.Orden ?? "reciente";
     }
     catch
     {
-
+      // Preferencias corruptas o inexistentes: se usan los valores por defecto.
     }
   }
 
   private async Task GuardarPreferenciasAsync()
   {
-    var prefs = new PreferenciasUI {Filtro = filtro, Busqueda = busqueda, Orden = orden };
+    var prefs = new PreferenciasUI { Filtro = filtro, SoloEnProgreso = soloEnProgreso, Busqueda = busqueda, Orden = orden };
     var json = JsonSerializer.Serialize(prefs);
     await JS.InvokeVoidAsync("localStorage.setItem", PrefsKey, json);
   }
@@ -169,6 +181,12 @@
   private async Task AplicarFiltro(TipoLibro? tipo)
   {
     filtro = tipo;
+    await GuardarPreferenciasAsync();
+  }
+
+  private async Task ToggleEnProgreso()
+  {
+    soloEnProgreso = !soloEnProgreso;
     await GuardarPreferenciasAsync();
   }
 
