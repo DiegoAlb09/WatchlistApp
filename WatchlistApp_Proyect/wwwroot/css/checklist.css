@@ -1,0 +1,83 @@
+/* ==========================================================================
+   CHECKLISTS: checkbox "Vista" (peliculas) y grilla de episodios (series).
+   Exclusivo de Pages/Home.razor.
+   ========================================================================== */
+
+.visto-check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.85rem;
+    margin-bottom: 8px;
+    cursor: pointer;
+    padding: 10px 14px;
+    border-radius: var(--radius-md);
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+}
+.visto-check input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    border: 2px solid var(--muted);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+.visto-check input[type="checkbox"]:checked {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+.visto-check input[type="checkbox"]:checked::after {
+    content: "";
+    position: absolute;
+    left: 4px;
+    top: 0px;
+    width: 5px;
+    height: 9px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.episodios-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 8px;
+    max-height: 90px;
+    overflow-y: auto;
+}
+.ep-check {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 0.7rem;
+    color: var(--muted);
+    cursor: pointer;
+    position: relative;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+.ep-check input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+}
+.ep-check:has(input:checked) {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+}

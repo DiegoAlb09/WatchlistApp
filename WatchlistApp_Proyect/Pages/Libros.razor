@@ -1,108 +1,223 @@
 @page "/libros"
+@using System.Text.Json
 @inject LibraryStorageService Storage
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
 <div class="libros-theme">
-    <div class="header">
-        <h1><Icon Name="book" />Libros, Manga y Cómics</h1>
-        <button class="btn-add" @onclick="IrAAgregar">+ Agregar</button>
+  <div class="header">
+    <h1>
+      <Icon Name="book" /> Libros, Manga y Cómics
+    </h1>
+    <button class="btn-add" @onclick="IrAAgregar">+ Agregar</button>
+  </div>
+
+  @if (items is null)
+  {
+    <p>Cargando...</p>
+  }
+  else
+  {
+    <div class="filters">
+      <button class="@(filtro == null ? "filtro-activo" : "")" @onclick="() => AplicarFiltro(null)">Todo</button>
+      <button class="@(filtro == TipoLibro.Libro ? "filtro-activo" : "")"
+              @onclick="() => AplicarFiltro(TipoLibro.Libro)">Libros</button>
+      <button class="@(filtro == TipoLibro.Manga ? "filtro-activo" : "")"
+              @onclick="() => AplicarFiltro(TipoLibro.Manga)">Manga</button>
+      <button class="@(filtro == TipoLibro.Comic ? "filtro-activo" : "")"
+              @onclick="() => AplicarFiltro(TipoLibro.Comic)">Cómics</button>
+      <button class="@(soloEnProgreso ? "filtro-activo" : "")" @onclick="ToggleEnProgreso">En progreso</button>
     </div>
 
-    @if (items is null)
+    <div class="search-sort">
+      <input type="text" class="search-input" placeholder="Buscar por título..." value="@busqueda"
+             @oninput="OnBusquedaChanged" />
+      <select class="sort-select" value="@orden" @onchange="OnOrdenChanged">
+        <option value="reciente">Más recientes primero</option>
+        <option value="antiguos">Más antiguos primero</option>
+        <option value="avance">Más avanzados primero</option>
+        <option value="titulo-az">Título A-Z</option>
+        <option value="titulo-za">Título Z-A</option>
+      </select>
+    </div>
+
+    @if (!ItemsFiltrados.Any())
     {
-        <p>Cargando...</p>
+      <p class="empty-msg">
+        @(items.Count == 0 ? "Aún no has agregado nada." : "Nada coincide con tu búsqueda/filtro.")
+      </p>
     }
     else
     {
-        <div class="filters">
-            <button class="@(filtro == null ? "filtro-activo" : "")" @onclick="() => filtro = null">Todo</button>
-            <button class="@(filtro == TipoLibro.Libro ? "filtro-activo" : "")" @onclick="() => filtro = TipoLibro.Libro">Libros</button>
-            <button class="@(filtro == TipoLibro.Manga ? "filtro-activo" : "")" @onclick="() => filtro = TipoLibro.Manga">Manga</button>
-            <button class="@(filtro == TipoLibro.Comic ? "filtro-activo" : "")" @onclick="() => filtro = TipoLibro.Comic">Cómics</button>
-        </div>
-
-        @if (!ItemsFiltrados.Any())
+      <div class="libro-lista">
+        @foreach (var libro in ItemsFiltrados)
         {
-            <p class="empty-msg">Aún no has agregado nada.</p>
-        }
-        else
-        {
-            <div class="libro-lista">
-                @foreach (var libro in ItemsFiltrados)
-                {
-                    <div class="libro-row">
-                        <div class="libro-cover" style="background-image:url('@libro.PortadaUrl')">
-                            @if (string.IsNullOrWhiteSpace(libro.PortadaUrl))
-                            {
-                                <span class="no-cover"><Icon Name="photo" /></span>
-                            }
-                        </div>
-                        <div class="libro-info">
-                            <h3>@libro.Titulo</h3>
-                            <p class="tipo-tag">@libro.Tipo</p>
-
-                            <div class="stepper">
-                                <button @onclick="() => CambiarCapitulo(libro, -1)"><Icon Name="minus" /></button>
-                                <span>
-                                    Cap. @libro.CapituloActual
-                                    @(libro.CapituloFin is not null ? $" / {libro.CapituloFin}" : "")
-                                </span>
-                                <button @onclick="() => CambiarCapitulo(libro, 1)"><Icon Name="plus" /></button>
-                            </div>
-
-                            @if (libro.Porcentaje is not null)
-                            {
-                                <div class="mini-progress">
-                                    <div class="mini-progress-fill" style="width:@(libro.Porcentaje)%"></div>
-                                </div>
-                            }
-                        </div>
-                        <div class="libro-actions">
-                            <button class="btn-edit" @onclick="() => Editar(libro.Id)"><Icon Name="pencil" />Editar</button>
-                            <button class="btn-delete" @onclick="() => Eliminar(libro.Id, libro.Titulo)"><Icon Name="trash" />Eliminar</button>
-                        </div>
-                    </div>
-                }
+          <div class="libro-row">
+            <div class="libro-cover" style="background-image:url('@libro.PortadaUrl')">
+              @if (string.IsNullOrWhiteSpace(libro.PortadaUrl))
+              {
+                <Icon Name="photo" />
+              }
             </div>
+            <div class="libro-info">
+              <h3>@libro.Titulo</h3>
+              <p class="tipo-tag">@libro.Tipo</p>
+
+              <div class="stepper">
+                <button @onclick="() => CambiarCapitulo(libro, -1)">−</button>
+                <span>
+                  Cap. @libro.CapituloActual
+                  @(libro.CapituloFin is not null ? $" / {libro.CapituloFin}" : "")
+                </span>
+                <button @onclick="() => CambiarCapitulo(libro, 1)">+</button>
+              </div>
+
+              @if (libro.Porcentaje is not null)
+              {
+                <div class="mini-progress">
+                  <div class="mini-progress-fill" style="width:@(libro.Porcentaje)%"></div>
+                </div>
+              }
+            </div>
+            <div class="libro-actions">
+              <button class="btn-edit" @onclick="() => Editar(libro.Id)">
+                <Icon Name="pencil" /><span>Editar</span>
+              </button>
+              <button class="btn-delete" @onclick="() => Eliminar(libro.Id, libro.Titulo)">
+                <Icon Name="trash" /><span>Eliminar</span>
+              </button>
+            </div>
+          </div>
         }
+      </div>
     }
+  }
 </div>
 
 @code {
-    private List<LibroItem>? items;
-    private TipoLibro? filtro;
+  private const string PrefsKey = "libros-ui-prefs";
 
-    private IEnumerable<LibroItem> ItemsFiltrados =>
-        items is null ? Enumerable.Empty<LibroItem>()
-        : filtro is null ? items
-        : items.Where(i => i.Tipo == filtro);
+  private List<LibroItem>? items;
+  private TipoLibro? filtro;
+  private bool soloEnProgreso = false;
+  private string busqueda = "";
+  private string orden = "reciente";
 
-    protected override async Task OnInitializedAsync()
+  private class PreferenciasUI
+  {
+    public TipoLibro? Filtro { get; set; }
+    public bool SoloEnProgreso { get; set; }
+    public string? Busqueda { get; set; }
+    public string? Orden { get; set; }
+  }
+
+  // Los que no tienen meta definida (CapituloFin null -> Porcentaje null) se consideran
+  // "sin avance cuantificable" y quedan al final al ordenar por avance.
+  private static double AvanceOrdenable(LibroItem i) => i.Porcentaje ?? -1;
+
+  private IEnumerable<LibroItem> ItemsFiltrados
+  {
+    get
     {
-        items = await Storage.GetAllAsync();
+      if (items is null) return Enumerable.Empty<LibroItem>();
+
+      var lista = items.Where(i => filtro is null || i.Tipo == filtro);
+
+      if (soloEnProgreso)
+        lista = lista.Where(i => !i.EstaCompleta && i.CapitulosLeidos > 0);
+
+      if (!string.IsNullOrWhiteSpace(busqueda))
+        lista = lista.Where(i => i.Titulo.Contains(busqueda, StringComparison.OrdinalIgnoreCase));
+
+      return orden switch
+      {
+        "titulo-az" => lista.OrderBy(i => i.Titulo, StringComparer.OrdinalIgnoreCase),
+        "titulo-za" => lista.OrderByDescending(i => i.Titulo, StringComparer.OrdinalIgnoreCase),
+        "antiguos" => lista.OrderBy(i => i.FechaAgregado),
+        "avance" => lista.OrderByDescending(AvanceOrdenable).ThenByDescending(i => i.FechaAgregado),
+        _ => lista.OrderByDescending(i => i.FechaAgregado),
+      };
     }
+  }
 
-    private void IrAAgregar() => Nav.NavigateTo("/libros/agregar");
+  protected override async Task OnInitializedAsync()
+  {
+    await CargarPreferenciasAsync();
+    items = await Storage.GetAllAsync();
+  }
 
-    private void Editar(Guid id) => Nav.NavigateTo($"/libros/agregar/{id}");
-
-    private async Task CambiarCapitulo(LibroItem libro, int delta)
+  private async Task CargarPreferenciasAsync()
+  {
+    try
     {
-        var nuevo = libro.CapituloActual + delta;
-        if (nuevo < libro.CapituloInicio) nuevo = libro.CapituloInicio;
-        if (libro.CapituloFin is not null && nuevo > libro.CapituloFin) nuevo = libro.CapituloFin.Value;
+      var json = await JS.InvokeAsync<string?>("localStorage.getItem", PrefsKey);
+      if (string.IsNullOrWhiteSpace(json)) return;
 
-        libro.CapituloActual = nuevo;
-        await Storage.UpdateAsync(libro);
+      var prefs = JsonSerializer.Deserialize<PreferenciasUI>(json);
+      if (prefs is null) return;
+
+      filtro = prefs.Filtro;
+      soloEnProgreso = prefs.SoloEnProgreso;
+      busqueda = prefs.Busqueda ?? "";
+      orden = prefs.Orden ?? "reciente";
     }
-
-    private async Task Eliminar(Guid id, string titulo)
+    catch
     {
-        var confirmado = await JS.InvokeAsync<bool>("confirm", $"¿Eliminar \"{titulo}\" de tu lista?");
-        if (!confirmado) return;
-
-        await Storage.DeleteAsync(id);
-        items = await Storage.GetAllAsync();
+      // Preferencias corruptas o inexistentes: se usan los valores por defecto.
     }
+  }
+
+  private async Task GuardarPreferenciasAsync()
+  {
+    var prefs = new PreferenciasUI { Filtro = filtro, SoloEnProgreso = soloEnProgreso, Busqueda = busqueda, Orden = orden };
+    var json = JsonSerializer.Serialize(prefs);
+    await JS.InvokeVoidAsync("localStorage.setItem", PrefsKey, json);
+  }
+
+  private void IrAAgregar() => Nav.NavigateTo("/libros/agregar");
+
+  private void Editar(Guid id) => Nav.NavigateTo($"/libros/agregar/{id}");
+
+  private async Task AplicarFiltro(TipoLibro? tipo)
+  {
+    filtro = tipo;
+    await GuardarPreferenciasAsync();
+  }
+
+  private async Task ToggleEnProgreso()
+  {
+    soloEnProgreso = !soloEnProgreso;
+    await GuardarPreferenciasAsync();
+  }
+
+  private async Task OnBusquedaChanged(ChangeEventArgs e)
+  {
+    busqueda = e.Value?.ToString() ?? "";
+    await GuardarPreferenciasAsync();
+  }
+
+  private async Task OnOrdenChanged(ChangeEventArgs e)
+  {
+    orden = e.Value?.ToString() ?? "reciente";
+    await GuardarPreferenciasAsync();
+  }
+
+  private async Task CambiarCapitulo(LibroItem libro, int delta)
+  {
+    var nuevo = libro.CapituloActual + delta;
+    if (nuevo < libro.CapituloInicio) nuevo = libro.CapituloInicio;
+    if (libro.CapituloFin is not null && nuevo > libro.CapituloFin) nuevo = libro.CapituloFin.Value;
+
+    libro.CapituloActual = nuevo;
+    await Storage.UpdateAsync(libro);
+  }
+
+  private async Task Eliminar(Guid id, string titulo)
+  {
+    var confirmado = await JS.InvokeAsync<bool>("confirm", $"¿Eliminar \"{titulo}\" de tu lista?");
+    if (!confirmado) return;
+
+    await Storage.DeleteAsync(id);
+    items = await Storage.GetAllAsync();
+  }
 }

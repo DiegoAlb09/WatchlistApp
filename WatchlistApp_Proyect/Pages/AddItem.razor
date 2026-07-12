@@ -11,10 +11,10 @@
     <DataAnnotationsValidator />
 
     <label>Título</label>
-    <InputText @bind-Value="item.Titulo" placeholder="Ej. One Piece" />
+    <InputText @bind-Value="item.Titulo" type="text" placeholder="Ej. One Piece" />
 
     <label>Portada (URL de la imagen)</label>
-    <InputText @bind-Value="item.PortadaUrl" placeholder="https://..." />
+    <InputText @bind-Value="item.PortadaUrl" type="url" placeholder="https://..." />
 
     @if (!string.IsNullOrWhiteSpace(item.PortadaUrl))
     {

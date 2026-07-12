@@ -1,0 +1,119 @@
+/* ==========================================================================
+   BOTONES Y CONTROLES: cualquier boton/pill/filtro de la app. Compartido.
+   ========================================================================== */
+
+.btn-add {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    cursor: pointer;
+}
+.btn-add:hover { opacity: 0.9; }
+
+.btn-edit, .btn-delete {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    background: transparent;
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    flex: 1;
+}
+.btn-edit { color: #4ea8de; border: 1px solid #4ea8de; }
+.btn-edit:hover { background: #4ea8de22; }
+.btn-delete { color: var(--accent); border: 1px solid var(--accent); }
+.btn-delete:hover { background: #e6394622; }
+
+.btn-icon-mini {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+}
+.btn-icon-mini .icon { width: 15px; height: 15px; }
+.btn-icon-mini.editar { color: #4ea8de; border-color: #4ea8de44; }
+.btn-icon-mini.editar:hover { background: #4ea8de22; border-color: #4ea8de; }
+.btn-icon-mini.eliminar {
+    color: var(--accent);
+    border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+}
+.btn-icon-mini.eliminar:hover {
+    background: color-mix(in srgb, var(--accent) 15%, transparent);
+    border-color: var(--accent);
+}
+
+.btn-cancel {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 10px 18px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+}
+
+/* ===== Filtros (pills) ===== */
+.filters {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: var(--space-lg);
+}
+.filters button {
+    background: var(--card-bg);
+    color: var(--muted);
+    border: 1px solid var(--border);
+    padding: 8px 14px;
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+.filters button.filtro-activo {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+}
+
+/* ===== Barra de progreso general ===== */
+.progress-card {
+    background: var(--card-bg);
+    border-radius: var(--radius-lg);
+    padding: 16px var(--space-lg);
+    margin-bottom: var(--space-lg);
+}
+.progress-text {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    color: var(--muted);
+    margin-bottom: var(--space-sm);
+}
+.progress-bar {
+    background: var(--border);
+    border-radius: 6px;
+    height: 10px;
+    overflow: hidden;
+}
+.progress-fill {
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    height: 100%;
+    transition: width 0.3s ease;
+}
+.progress-percent {
+    text-align: right;
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-top: 6px;
+}

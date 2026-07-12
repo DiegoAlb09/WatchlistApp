@@ -1,0 +1,67 @@
+/* LAYOUT: estructura de pagina (navbar, main, encabezados). Compartido por
+  TODAS las paginas (Home, AddItem, Libros, AgregarLibro).
+*/
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-md) var(--space-lg);
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border);
+}
+.navbar { display: flex; gap: var(--space-sm); }
+.navbar a {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: 6px;
+}
+.navbar a.active {
+  color: white;
+  background: var(--accent);
+}
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  color: var(--text);
+}
+
+main {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: var(--space-lg) var(--space-lg) 60px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+h1 {
+  font-size: 1.6rem;
+  margin: 0;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+h1 .icon { width: 24px; height: 24px; }
+
+.empty-msg { color: var(--muted); text-align: center; margin-top: 40px; }

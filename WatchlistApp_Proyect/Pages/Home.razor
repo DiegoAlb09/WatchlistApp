@@ -1,180 +1,311 @@
 ﻿@page "/"
+@using System.Text.Json
 @inject LocalStorageService Storage
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
 <div class="header">
-    <h1><Icon Name="film" /> Mi Watchlist</h1>
-    <button class="btn-add" @onclick="IrAAgregar">+ Agregar Serie/Película</button>
+  <h1>
+    <Icon Name="film" /> Mi Watchlist
+  </h1>
+  <button class="btn-add" @onclick="IrAAgregar">+ Agregar Serie/Película</button>
 </div>
 
 @if (items is null)
 {
-    <p>Cargando...</p>
+  <p>Cargando...</p>
 }
 else
 {
-    <div class="progress-card">
-        <div class="progress-text">
-            <span>@unidadesVistas vistas</span>
-            <span>@pendientes pendientes</span>
-        </div>
-        <div class="progress-bar">
-            <div class="progress-fill" style="width:@porcentaje%"></div>
-        </div>
-        <div class="progress-percent">@porcentaje% completado</div>
+  <div class="progress-card">
+    <div class="progress-text">
+      <span>@unidadesVistas vistas</span>
+      <span>@pendientes pendientes</span>
     </div>
-
-    <div class="filters">
-        <button class="@(filtro == null ? "filtro-activo" : "")" @onclick="() => AplicarFiltro(null)">Todo</button>
-        <button class="@(filtro == TipoContenido.Serie ? "filtro-activo" : "")" @onclick="() => AplicarFiltro(TipoContenido.Serie)">Solo series</button>
-        <button class="@(filtro == TipoContenido.Pelicula ? "filtro-activo" : "")" @onclick="() => AplicarFiltro(TipoContenido.Pelicula)">Solo películas</button>
-        <button class="@(compactarCompletados ? "filtro-activo" : "")" @onclick="() => compactarCompletados = !compactarCompletados">
-            @(compactarCompletados ? "Mostrar completos" : "Compactar completos")
-        </button>
+    <div class="progress-bar">
+      <div class="progress-fill" style="width:@porcentaje%"></div>
     </div>
+    <div class="progress-percent">@porcentaje% completado</div>
+  </div>
 
-    @if (!ItemsFiltrados.Any())
+  <div class="filters">
+    <button class="@(filtro == null ? "filtro-activo" : "")" @onclick='() => AplicarFiltro(null)'>Todo</button>
+    <button class="@(filtro == TipoContenido.Serie ? "filtro-activo" : "")"
+            @onclick="() => AplicarFiltro(TipoContenido.Serie)">Solo series</button>
+    <button class="@(filtro == TipoContenido.Pelicula ? "filtro-activo" : "")"
+            @onclick="() => AplicarFiltro(TipoContenido.Pelicula)">Solo películas</button>
+    <button class="@(soloEnProgreso ? "filtro-activo" : "")" @onclick="ToggleEnProgreso">En progreso</button>
+    <button class="@(compactarCompletados ? "filtro-activo" : "")" @onclick="ToggleCompactar">
+      @(compactarCompletados ? "Mostrar completos" : "Compactar completos")
+    </button>
+  </div>
+
+  <div class="search-sort">
+    <input type="text" class="search-input" placeholder="Buscar por título..." value="@busqueda"
+          @oninput="OnBusquedaChanged" />
+    <select class="sort-select" value="@orden" @onchange="OnOrdenChanged">
+      <option value="reciente">Más recientes primero</option>
+      <option value="antiguos">Más antiguos primero</option>
+      <option value="avance">Más avanzados primero</option>
+      <option value="titulo-az">Título A-Z</option>
+      <option value="titulo-za">Título Z-A</option>
+    </select>
+  </div>
+
+  @if (!ItemsFiltrados.Any())
+  {
+    <p class="empty-msg">
+      @(items.Count == 0
+          ? "Aún no has agregado nada. ¡Presiona \"Agregar\" para empezar!"
+          : "Nada coincide con tu búsqueda/filtro.")
+    </p>
+  }
+  else
+  {
+    @if (Pendientes.Any())
     {
-        <p class="empty-msg">Aún no has agregado nada. ¡Presiona "Agregar" para empezar!</p>
+      <div class="grid">
+        @foreach (var item in Pendientes)
+        {
+          <div class="card">
+            <div class="cover" style="background-image:url('@item.PortadaUrl')">
+              @if (string.IsNullOrWhiteSpace(item.PortadaUrl))
+              {
+                <Icon Name="photo" />
+              }
+            </div>
+            <div class="card-body">
+              <h3>@item.Titulo</h3>
+              <p class="tipo-tag">@(item.Tipo == TipoContenido.Serie ? "Serie" : "Película")</p>
+
+              @if (item.Tipo == TipoContenido.Serie && item.EpisodioInicio is not null && item.EpisodioFin is not null)
+              {
+                <p class="episodios">
+                  @item.EpisodiosVistos.Count / @item.TotalEpisodiosRango vistos
+                  (Cap. @item.EpisodioInicio–@item.EpisodioFin)
+                </p>
+                <div class="episodios-grid">
+                  @for (int ep = item.EpisodioInicio.Value; ep <= item.EpisodioFin.Value; ep++)
+                  {
+                    var epNum = ep;
+                    <label class="ep-check" title="Episodio @epNum">
+                      <input type="checkbox" checked="@item.EpisodiosVistos.Contains(epNum)"
+                            @onchange="e => MarcarEpisodio(item, epNum, (bool)e.Value!)" />
+                      @epNum
+                    </label>
+                  }
+                </div>
+              }
+              else
+              {
+                <label class="visto-check">
+                  <input type="checkbox" checked="@item.Visto" @onchange="e => MarcarVisto(item, (bool)e.Value!)" />
+                  <span>Vista</span>
+                </label>
+              }
+
+              <div class="card-actions">
+                <button class="btn-edit" @onclick="() => Editar(item.Id)">
+                  <Icon Name="pencil" /><span>Editar</span>
+                </button>
+                <button class="btn-delete" @onclick="() => Eliminar(item.Id, item.Titulo)">
+                  <Icon Name="trash" /><span>Eliminar</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
     }
-    else
+
+    @if (compactarCompletados && Completados.Any())
     {
-        @if (!Pendientes.Any() && !Completados.Any())
+      <h2 class="seccion-completados">
+        <Icon Name="check" /> Completados
+      </h2>
+      <div class="completados-compactos">
+        @foreach (var item in Completados)
         {
-            <p class="empty-msg">No hay nada en esta categoría.</p>
+          <div class="card-compacto">
+            <span class="check-ok">
+              <Icon Name="check" />
+            </span>
+            <span class="titulo-compacto">@item.Titulo</span>
+            <button class="btn-icon-mini editar" title="Editar" @onclick="() => Editar(item.Id)">
+              <Icon Name="pencil" />
+            </button>
+            <button class="btn-icon-mini eliminar" title="Eliminar" @onclick="() => Eliminar(item.Id, item.Titulo)">
+              <Icon Name="trash" />
+            </button>
+          </div>
         }
-
-        @if (Pendientes.Any())
-        {
-            <div class="grid">
-                @foreach (var item in Pendientes)
-                {
-                    <div class="card">
-                        <div class="cover" style="background-image:url('@item.PortadaUrl')">
-                            @if (string.IsNullOrWhiteSpace(item.PortadaUrl))
-                            {
-                                <Icon Name="photo" />
-                            }
-                        </div>
-                        <div class="card-body">
-                            <h3>@item.Titulo</h3>
-                            <p class="tipo-tag">@(item.Tipo == TipoContenido.Serie ? "Serie" : "Película")</p>
-
-                            @if (item.Tipo == TipoContenido.Serie && item.EpisodioInicio is not null && item.EpisodioFin is not null)
-                            {
-                                <p class="episodios">
-                                    @item.EpisodiosVistos.Count / @item.TotalEpisodiosRango vistos
-                                    (Cap. @item.EpisodioInicio–@item.EpisodioFin)
-                                </p>
-                                <div class="episodios-grid">
-                                    @for (int ep = item.EpisodioInicio.Value; ep <= item.EpisodioFin.Value; ep++)
-                                    {
-                                        var epNum = ep;
-                                        <label class="ep-check" title="Episodio @epNum">
-                                            <input type="checkbox"
-                                                   checked="@item.EpisodiosVistos.Contains(epNum)"
-                                                   @onchange="e => MarcarEpisodio(item, epNum, (bool)e.Value!)" />
-                                            @epNum
-                                        </label>
-                                    }
-                                </div>
-                            }
-                            else
-                            {
-                                <label class="visto-check">
-                                    <input type="checkbox" checked="@item.Visto" @onchange="e => MarcarVisto(item, (bool)e.Value!)" />
-                                    <span>Vista</span>
-                                </label>
-                            }
-
-                            <div class="card-actions">
-                                <button class="btn-edit" @onclick="() => Editar(item.Id)"><Icon Name="pencil" /><span>Editar</span></button>
-                                <button class="btn-delete" @onclick="() => Eliminar(item.Id, item.Titulo)"><Icon Name="trash" /><span>Eliminar</span></button>
-                            </div>
-                        </div>
-                    </div>
-                }
-            </div>
-        }
-
-        @if (compactarCompletados && Completados.Any())
-        {
-            <h2 class="seccion-completados"><Icon Name="check" /> Completados</h2>
-            <div class="completados-compactos">
-                @foreach (var item in Completados)
-                {
-                    <div class="card-compacto">
-                        <span class="check-ok"><Icon Name="check" /></span>
-                        <span class="titulo-compacto">@item.Titulo</span>
-                        <button class="btn-icon-mini editar" title="Editar" @onclick="() => Editar(item.Id)"><Icon Name="pencil" /></button>
-                        <button class="btn-icon-mini eliminar" title="Eliminar" @onclick="() => Eliminar(item.Id, item.Titulo)"><Icon Name="trash" /></button>
-                    </div>
-                }
-            </div>
-        }
+      </div>
     }
+  }
 }
 
 @code {
-    private List<WatchlistItem>? items;
-    private TipoContenido? filtro = null;
-    private bool compactarCompletados = false;
+  private const string PrefsKey = "watchlist-ui-prefs";
 
-    private IEnumerable<WatchlistItem> ItemsFiltrados =>
-        items is null ? Enumerable.Empty<WatchlistItem>()
-        : filtro is null ? items
-        : items.Where(i => i.Tipo == filtro);
+  private List<WatchlistItem>? items;
+  private TipoContenido? filtro = null;
+  private bool compactarCompletados = false;
+  private bool soloEnProgreso = false;
+  private string busqueda = "";
+  private string orden = "reciente";
 
-    private IEnumerable<WatchlistItem> Pendientes =>
-        ItemsFiltrados.Where(i => !(compactarCompletados && i.EstaCompleta));
+  private class PreferenciasUI
+  {
+    public TipoContenido? Filtro { get; set; }
+    public bool CompactarCompletados { get; set; }
+    public bool SoloEnProgreso { get; set; }
+    public string? Busqueda { get; set; }
+    public string? Orden { get; set; }
+  }
 
-    private IEnumerable<WatchlistItem> Completados =>
-        compactarCompletados ? ItemsFiltrados.Where(i => i.EstaCompleta) : Enumerable.Empty<WatchlistItem>();
+  // Avance de 0.0 a 1.0. Peliculas: 0 o 1. Series: EpisodiosVistos / TotalEpisodiosRango.
+  private static double Avance(WatchlistItem i) =>
+      i.TotalUnidades == 0 ? 0 : (double)i.UnidadesVistas / i.TotalUnidades;
 
-    private int totalUnidades => items?.Sum(i => i.TotalUnidades) ?? 0;
-    private int unidadesVistas => items?.Sum(i => i.UnidadesVistas) ?? 0;
-    private int pendientes => totalUnidades - unidadesVistas;
-    private int porcentaje => totalUnidades == 0 ? 0 : (int)Math.Round(unidadesVistas * 100.0 / totalUnidades);
-
-    protected override async Task OnInitializedAsync()
+  private IEnumerable<WatchlistItem> ItemsFiltrados
+  {
+    get
     {
-        items = await Storage.GetAllAsync();
+      if (items is null) return Enumerable.Empty<WatchlistItem>();
+
+      var lista = items.Where(i => filtro is null || i.Tipo == filtro);
+
+      if (soloEnProgreso)
+        lista = lista.Where(i => !i.EstaCompleta && i.UnidadesVistas > 0);
+
+      if (!string.IsNullOrWhiteSpace(busqueda))
+        lista = lista.Where(i => i.Titulo.Contains(busqueda, StringComparison.OrdinalIgnoreCase));
+
+      return orden switch
+      {
+        "titulo-az" => lista.OrderBy(i => i.Titulo, StringComparer.OrdinalIgnoreCase),
+        "titulo-za" => lista.OrderByDescending(i => i.Titulo, StringComparer.OrdinalIgnoreCase),
+        "antiguos" => lista.OrderBy(i => i.FechaAgregado),
+        "avance" => lista.OrderByDescending(Avance).ThenByDescending(i => i.FechaAgregado),
+        _ => lista.OrderByDescending(i => i.FechaAgregado),
+      };
     }
+  }
 
-    private void IrAAgregar() => Nav.NavigateTo("/agregar");
+  private IEnumerable<WatchlistItem> Pendientes =>
+      ItemsFiltrados.Where(i => !(compactarCompletados && i.EstaCompleta));
 
-    private void Editar(Guid id) => Nav.NavigateTo($"/agregar/{id}");
+  private IEnumerable<WatchlistItem> Completados =>
+      compactarCompletados ? ItemsFiltrados.Where(i => i.EstaCompleta) : Enumerable.Empty<WatchlistItem>();
 
-    private void AplicarFiltro(TipoContenido? tipo) => filtro = tipo;
+  private int totalUnidades => items?.Sum(i => i.TotalUnidades) ?? 0;
+  private int unidadesVistas => items?.Sum(i => i.UnidadesVistas) ?? 0;
+  private int pendientes => totalUnidades - unidadesVistas;
+  private int porcentaje => totalUnidades == 0 ? 0 : (int)Math.Round(unidadesVistas * 100.0 / totalUnidades);
 
-    private async Task MarcarVisto(WatchlistItem item, bool valor)
+  protected override async Task OnInitializedAsync()
+  {
+    await CargarPreferenciasAsync();
+    items = await Storage.GetAllAsync();
+  }
+
+  private async Task CargarPreferenciasAsync()
+  {
+    try
     {
-        item.Visto = valor;
-        await Storage.UpdateAsync(item);
-    }
+      var json = await JS.InvokeAsync<string?>("localStorage.getItem", PrefsKey);
+      if (string.IsNullOrWhiteSpace(json)) return;
 
-    private async Task MarcarEpisodio(WatchlistItem item, int episodio, bool marcado)
+      var prefs = JsonSerializer.Deserialize<PreferenciasUI>(json);
+      if (prefs is null) return;
+
+      filtro = prefs.Filtro;
+      compactarCompletados = prefs.CompactarCompletados;
+      soloEnProgreso = prefs.SoloEnProgreso;
+      busqueda = prefs.Busqueda ?? "";
+      orden = prefs.Orden ?? "reciente";
+    }
+    catch
     {
-        if (marcado)
-        {
-            if (!item.EpisodiosVistos.Contains(episodio))
-                item.EpisodiosVistos.Add(episodio);
-        }
-        else
-        {
-            item.EpisodiosVistos.Remove(episodio);
-        }
-        await Storage.UpdateAsync(item);
+      // Preferencias corruptas o inexistentes: se usan los valores por defecto.
     }
+  }
 
-    private async Task Eliminar(Guid id, string titulo)
+  private async Task GuardarPreferenciasAsync()
+  {
+    var prefs = new PreferenciasUI
     {
-        var confirmado = await JS.InvokeAsync<bool>("confirm", $"¿Eliminar \"{titulo}\" de tu watchlist?");
-        if (!confirmado)
-            return;
+      Filtro = filtro,
+      CompactarCompletados = compactarCompletados,
+      SoloEnProgreso = soloEnProgreso,
+      Busqueda = busqueda,
+      Orden = orden
+    };
+    var json = JsonSerializer.Serialize(prefs);
+    await JS.InvokeVoidAsync("localStorage.setItem", PrefsKey, json);
+  }
 
-        await Storage.DeleteAsync(id);
-        items = await Storage.GetAllAsync();
+  private void IrAAgregar() => Nav.NavigateTo("/agregar");
+
+  private void Editar(Guid id) => Nav.NavigateTo($"/agregar/{id}");
+
+  private async Task AplicarFiltro(TipoContenido? tipo)
+  {
+    filtro = tipo;
+    await GuardarPreferenciasAsync();
+  }
+
+  private async Task ToggleCompactar()
+  {
+    compactarCompletados = !compactarCompletados;
+    await GuardarPreferenciasAsync();
+  }
+
+  private async Task ToggleEnProgreso()
+  {
+    soloEnProgreso = !soloEnProgreso;
+    await GuardarPreferenciasAsync();
+  }
+
+  private async Task OnBusquedaChanged(ChangeEventArgs e)
+  {
+    busqueda = e.Value?.ToString() ?? "";
+    await GuardarPreferenciasAsync();
+  }
+
+  private async Task OnOrdenChanged(ChangeEventArgs e)
+  {
+    orden = e.Value?.ToString() ?? "reciente";
+    await GuardarPreferenciasAsync();
+  }
+
+  private async Task MarcarVisto(WatchlistItem item, bool valor)
+  {
+    item.Visto = valor;
+    await Storage.UpdateAsync(item);
+  }
+
+  private async Task MarcarEpisodio(WatchlistItem item, int episodio, bool marcado)
+  {
+    if (marcado)
+    {
+      if (!item.EpisodiosVistos.Contains(episodio))
+        item.EpisodiosVistos.Add(episodio);
     }
+    else
+    {
+      item.EpisodiosVistos.Remove(episodio);
+    }
+    await Storage.UpdateAsync(item);
+  }
+
+  private async Task Eliminar(Guid id, string titulo)
+  {
+    var confirmado = await JS.InvokeAsync<bool>("confirm", $"¿Eliminar \"{titulo}\" de tu watchlist?");
+    if (!confirmado)
+      return;
+
+    await Storage.DeleteAsync(id);
+    items = await Storage.GetAllAsync();
+  }
 }

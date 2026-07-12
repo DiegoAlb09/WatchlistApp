@@ -1,0 +1,28 @@
+/*Base: reset y elementos de nivel documento*/
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  margin: 0;
+}
+
+.icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+#blazor-error-ui {
+  display: none;
+  background: var(--accent);
+  color: white;
+  padding: var(--space-md);
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+}
