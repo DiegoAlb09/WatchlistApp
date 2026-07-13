@@ -1,0 +1,99 @@
+@page "/estadisticas"
+@inject LocalStorageService WatchlistStorage
+@inject LibraryStorageService LibraryStorage
+
+<div class="header">
+  <h1>
+    <Icon Name="chart" />Estadísticas
+  </h1>
+</div>
+
+@if (series is null || libros is null)
+{
+  <p>Cargando...</p>
+}
+else
+{
+  <div class="stats-grid">
+    <div class="stat-card">
+      <span class="stat-number">@totalItems</span>
+      <span class="stat-label">Títulos en total</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-number">@totalCompletados</span>
+      <span class="stat-label">Completados</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-number">@totalEnProgreso</span>
+      <span class="stat-label">En progreso</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-number">@totalSinEmpezar</span>
+      <span class="stat-label">Sin empezar</span>
+    </div>
+  </div>
+
+  <h2 class="stats-subtitle">Progreso general por sección</h2>
+  <div class="donuts-row">
+    <div class="donut-card">
+      <DonutChart Porcentaje="@porcentajeSeries" Color="#e63946" />
+      <p><Icon Name="film"/> Series y Películas</p>
+      <span class="donut-detalle">@episodiosVistos episodios/películas vistas de @episodiosTotales</span>
+    </div>
+    <div class="donut-card">
+      <DonutChart Porcentaje="@porcentajeLibros" Color="#6c5ce7" />
+      <p><Icon Name="book"/> Libros, Manga y Cómics</p>
+      <span class="donut-detalle">@(librosConMeta) de @(libros.Count) con meta definida</span>
+    </div>
+  </div>
+
+  <h2 class="stats-subtitle">Distribución por tipo</h2>
+  <BarChart Items="@barItemsPorTipo"/>
+}
+
+@code {
+  private List<WatchlistItem>? series;
+  private List<LibroItem>? libros;
+
+  protected override async Task OnInitializedAsync()
+  {
+    series = await WatchlistStorage.GetAllAsync();
+    libros = await LibraryStorage.GetAllAsync();
+  }
+
+  private int totalItems => (series?.Count ?? 0) + (libros?.Count ?? 0);
+  private int totalCompletados => (series?.Count(i => i.EstaCompleta) ?? 0)
+    + (libros?.Count(i => i.EstaCompleta) ?? 0);
+
+  private int totalEnProgreso =>
+    (series?.Count(i => !i.EstaCompleta && i.UnidadesVistas > 0) ?? 0) +
+    (libros?.Count(i => !i.EstaCompleta && i.CapitulosLeidos > 0) ?? 0);
+
+  private int totalSinEmpezar => totalItems - totalCompletados - totalEnProgreso;
+
+  private int episodiosTotales => series?.Sum(i => i.TotalUnidades) ?? 0;
+  private int episodiosVistos => series?.Sum(i => i.UnidadesVistas) ?? 0;
+
+  private double porcentajeSeries =>
+    episodiosTotales == 0 ? 0 : Math.Round(episodiosVistos * 100.0 / episodiosTotales, 0);
+
+  private int librosConMeta => libros?.Count(i => i.Porcentaje is not null) ?? 0;
+
+  private double porcentajeLibros
+  {
+    get
+    {
+      var conMeta = libros?.Where(i => i.Porcentaje is not null).ToList() ?? new();
+      return conMeta.Count == 0 ? 0 : Math.Round(conMeta.Average(i => i.Porcentaje!.Value), 0);
+    }
+  }
+
+  private List<BarChart.BarItem> barItemsPorTipo => new()
+  {
+    new() { Label = "Series", Valor = series?.Count(i => i.Tipo == TipoContenido.Serie) ?? 0, Color = "#e63946" },
+    new() { Label = "Películas", Valor = series?.Count(i => i.Tipo == TipoContenido.Pelicula) ?? 0, Color = "#f77f00" },
+    new() { Label = "Libros", Valor = libros?.Count(i => i.Tipo == TipoLibro.Libro) ?? 0, Color = "#6c5ce7" },
+    new() { Label = "Manga", Valor = libros?.Count(i => i.Tipo == TipoLibro.Manga) ?? 0, Color = "#00b894" },
+    new() { Label = "Cómics", Valor = libros?.Count(i => i.Tipo == TipoLibro.Comic) ?? 0, Color = "#4ea8de" },
+  };
+}
