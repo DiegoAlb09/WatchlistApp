@@ -1,0 +1,24 @@
+<div class="bar-chart">
+  @foreach (var item in Items)
+  {
+    <div class="bar-row">
+      <span class="bar-label">@item.Label</span>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:@(Max == 0 ? 0 : Math.Round(item.Valor / 
+          Max * 100, 1))%; background:@item.Color;"></div>
+      </div>
+      <span class="bar-value">@item.Valor</span>
+    </div>
+  }
+</div>
+
+@code {
+  public class BarItem
+  {
+    public string Label { get; set; } = "";
+    public double Valor { get; set; }
+    public string Color { get; set; } = "var(--accent)";
+  }
+  [Parameter] public List<BarItem> Items { get; set; } = new();
+  private double Max => Items.Count == 0 ? 0 : Items.Max(i => i.Valor);
+}
