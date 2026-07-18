@@ -8,7 +8,14 @@
   <h1>
     <Icon Name="film" /> Mi Watchlist
   </h1>
-  <button class="btn-add" @onclick="IrAAgregar">+ Agregar Serie/Película</button>
+  <div class="header-actions">
+    <button class="btn-random" @onclick="ElegirAlAzar" title="Elegir una al azar entre lo pendiente">
+      <Icon Name="dice" /><span>Sorpréndeme</span>
+    </button>
+    <button class="btn-add" @onclick="IrAAgregar">
+      + Agregar Serie/Película
+    </button>
+  </div>
 </div>
 
 @if (items is null)
@@ -144,6 +151,37 @@ else
   }
 }
 
+@if (sorpresa is not null)
+{
+  <div class="modal-overlay" @onclick="CerrarModal">
+    <div class="modal-card" @onclick:stopPropagation="true">
+      <span class="modal-kicker">Tu próxima a ver es...</span>
+      <div class="modal-cover" style="background-image:url('@sorpresa.PortadaUrl')">
+        @if (string.IsNullOrWhiteSpace(sorpresa.PortadaUrl))
+        {
+          <Icon Name="photo" />
+        }
+      </div>
+      <h3>@sorpresa.Titulo</h3>
+      <p class="tipo-tag">@(sorpresa.Tipo == TipoContenido.Serie ? "Serie" : "Película")</p>
+      @if (sorpresa.Tipo == TipoContenido.Serie && sorpresa.EpisodioInicio is not null)
+      {
+        <p class="episodios">@sorpresa.EpisodiosVistos.Count / @sorpresa.TotalEpisodiosRango vistos</p>
+      }
+
+      <div class="modal-actions">
+        <button class="btn-random" @onclick="ElegirAlAzar">
+          <Icon Name="dice" /><span>Elegir otra</span>
+        </button>
+        <button class="btn-edit" @onclick="() => Editar(sorpresa.Id)">
+          <Icon Name="pencil" /><span>Editar</span>
+        </button>
+      </div>
+      <button class="modal-cerrar" @onclick="CerrarModal">Cerrar</button>
+    </div>
+  </div>
+}
+
 @code {
   private const string PrefsKey = "watchlist-ui-prefs";
 
@@ -153,6 +191,9 @@ else
   private bool soloEnProgreso = false;
   private string busqueda = "";
   private string orden = "reciente";
+
+  private WatchlistItem? sorpresa;
+  private Guid? ultimoElegidoId = null;
 
   private class PreferenciasUI
   {
@@ -308,4 +349,30 @@ else
     await Storage.DeleteAsync(id);
     items = await Storage.GetAllAsync();
   }
+
+  private async Task ElegirAlAzar()
+  {
+    var candidatos = (items ?? new()).Where(i => !i.EstaCompleta).ToList();
+
+    if (candidatos.Count == 0)
+    {
+      sorpresa = null;
+      await JS.InvokeVoidAsync("alert", "No tienes series o películas pendientes por ver.");
+      return;
+    }
+
+    // Evita repetir la ultima elegida, salvo que sea la unica opción disponible.
+    var opciones = (candidatos.Count > 1 && ultimoElegidoId is not null)
+      ? candidatos.Where(i => i.Id != ultimoElegidoId).ToList()
+      : candidatos;
+    
+    if (opciones.Count == 0)
+      opciones = candidatos;
+    
+    var random = new Random();
+    sorpresa = opciones[random.Next(opciones.Count)];
+    ultimoElegidoId = sorpresa.Id;
+  }
+
+  private void CerrarModal() => sorpresa = null;
 }
