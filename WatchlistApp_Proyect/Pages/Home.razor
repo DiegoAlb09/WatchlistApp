@@ -193,7 +193,7 @@ else
   private string orden = "reciente";
 
   private WatchlistItem? sorpresa;
-  private Guid? ultimoElegidoId = null;
+  private Guid? ultimoElegidoId;
 
   private class PreferenciasUI
   {
@@ -204,7 +204,6 @@ else
     public string? Orden { get; set; }
   }
 
-  // Avance de 0.0 a 1.0. Peliculas: 0 o 1. Series: EpisodiosVistos / TotalEpisodiosRango.
   private static double Avance(WatchlistItem i) =>
       i.TotalUnidades == 0 ? 0 : (double)i.UnidadesVistas / i.TotalUnidades;
 
@@ -361,14 +360,14 @@ else
       return;
     }
 
-    // Evita repetir la ultima elegida, salvo que sea la unica opción disponible.
+
     var opciones = (candidatos.Count > 1 && ultimoElegidoId is not null)
       ? candidatos.Where(i => i.Id != ultimoElegidoId).ToList()
       : candidatos;
-    
+
     if (opciones.Count == 0)
       opciones = candidatos;
-    
+
     var random = new Random();
     sorpresa = opciones[random.Next(opciones.Count)];
     ultimoElegidoId = sorpresa.Id;
