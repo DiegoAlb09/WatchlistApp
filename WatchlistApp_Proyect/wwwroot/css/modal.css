@@ -112,3 +112,34 @@
 .modal-cerrar:hover {
   color: var(--text);
 }
+
+.modal-card-lg {
+  max-width: 480px;
+}
+.modal-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: var(--space-md);
+}
+.modal-header-row h3 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--text);
+  font-size: 1.1rem;
+}
+.modal-close-x {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px;
+}
+.modal-close-x:hover {
+  color: var(--text);
+}

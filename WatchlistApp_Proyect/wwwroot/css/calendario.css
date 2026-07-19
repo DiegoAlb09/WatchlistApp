@@ -1,0 +1,50 @@
+.calendario-lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  width: 100%;
+  text-align: left;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.calendario-dia {
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+}
+.calendario-dia-nombre {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--input-bg));
+}
+
+.calendario-dia-nombre {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.calendario-hoy .calendario-dia-nombre {
+  color: var(--accent);
+}
+
+.calendario-vacio {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.calendario-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.calendario-chip {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  color: var(--text);
+}

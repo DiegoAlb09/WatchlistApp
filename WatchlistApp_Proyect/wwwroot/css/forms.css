@@ -117,3 +117,25 @@
   gap: 10px;
   margin-top: var(--space-lg);
 }
+
+/* Checkbox "En emision"*/
+.checkbox-inline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--text);
+  margin-top: 10px;
+  cursor: pointer;
+}
+.checkbox-inline input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+.checkbox-inline .icon {
+  width: 15px;
+  height: 15px;
+  color: var(--muted);
+}
