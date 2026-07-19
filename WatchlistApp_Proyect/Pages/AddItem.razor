@@ -4,102 +4,137 @@
 @inject NavigationManager Nav
 
 <div class="header">
-    <h1><Icon Name="@(EsEdicion ? "pencil" : "film")" /> @(EsEdicion ? "Editar" : "Agregar") a la Watchlist</h1>
+  <h1>
+    <Icon Name="@(EsEdicion ? "pencil" : "film")" /> @(EsEdicion ? "Editar" : "Agregar") a la Watchlist
+  </h1>
 </div>
 
 <EditForm Model="item" OnValidSubmit="Guardar" class="form-agregar">
-    <DataAnnotationsValidator />
+  <DataAnnotationsValidator />
 
-    <label>Título</label>
-    <InputText @bind-Value="item.Titulo" type="text" placeholder="Ej. One Piece" />
+  <label>Título</label>
+  <InputText @bind-Value="item.Titulo" type="text" placeholder="Ej. One Piece" />
 
-    <label>Portada (URL de la imagen)</label>
-    <InputText @bind-Value="item.PortadaUrl" type="url" placeholder="https://..." />
+  <label>Portada (URL de la imagen)</label>
+  <InputText @bind-Value="item.PortadaUrl" type="url" placeholder="https://..." />
 
-    @if (!string.IsNullOrWhiteSpace(item.PortadaUrl))
+  @if (!string.IsNullOrWhiteSpace(item.PortadaUrl))
+  {
+    <div class="preview" style="background-image:url('@item.PortadaUrl')"></div>
+  }
+
+  <label>Tipo</label>
+  <div class="tipo-selector">
+    <label>
+      <input type="radio" name="tipo" checked="@(item.Tipo == TipoContenido.Pelicula)"
+            @onchange="() => item.Tipo = TipoContenido.Pelicula" />
+      Película
+    </label>
+    <label>
+      <input type="radio" name="tipo" checked="@(item.Tipo == TipoContenido.Serie)"
+            @onchange="() => item.Tipo = TipoContenido.Serie" />
+      Serie
+    </label>
+  </div>
+
+  @if (item.Tipo == TipoContenido.Serie)
+  {
+    <label>Rango de capítulos pendientes</label>
+    <div class="rango-episodios">
+      <InputNumber @bind-Value="item.EpisodioInicio" placeholder="Desde (ej. 1169)" />
+      <span class="rango-separador">–</span>
+      <InputNumber @bind-Value="item.EpisodioFin" placeholder="Hasta (ej. 1170)" />
+    </div>
+    @if (item.EpisodioInicio is not null && item.EpisodioFin is not null && item.EpisodioFin < item.EpisodioInicio)
     {
-        <div class="preview" style="background-image:url('@item.PortadaUrl')"></div>
+      <p class="rango-error">El capítulo "Hasta" debe ser mayor o igual que "Desde".</p>
     }
 
-    <label>Tipo</label>
-    <div class="tipo-selector">
-        <label>
-            <input type="radio" name="tipo" checked="@(item.Tipo == TipoContenido.Pelicula)"
-                @onchange="() => item.Tipo = TipoContenido.Pelicula" />
-            Película
-        </label>
-        <label>
-            <input type="radio" name="tipo" checked="@(item.Tipo == TipoContenido.Serie)"
-                @onchange="() => item.Tipo = TipoContenido.Serie" />
-            Serie
-        </label>
-    </div>
+    <label class="checkbox-inline">
+      <input type="checkbox" checked="@item.EnEmision" @onchange="e => item.EnEmision = (bool)e.Value!" />
+      <icon Name="calendar" /> En emisión (aparece en el calendario de estrenos)
+    </label>
 
-    @if (item.Tipo == TipoContenido.Serie)
+    @if (item.EnEmision)
     {
-        <label>Rango de capítulos pendientes</label>
-        <div class="rango-episodios">
-            <InputNumber @bind-Value="item.EpisodioInicio" placeholder="Desde (ej. 1169)" />
-            <span class="rango-separador">–</span>
-            <InputNumber @bind-Value="item.EpisodioFin" placeholder="Hasta (ej. 1170)" />
-        </div>
-        @if (item.EpisodioInicio is not null && item.EpisodioFin is not null && item.EpisodioFin < item.EpisodioInicio)
+      <label>Día de emisión</label>
+      <select class="sort-select" @onchange="OnDiaEmisionChanged">
+        <option value="-1" selected="@(item.DiaEmision is null)">Selecciona un día</option>
+        @foreach (var (dia, nombre) in DiasEmision.Todos)
         {
-            <p class="rango-error">El capítulo "Hasta" debe ser mayor o igual que "Desde".</p>
+          <option value="@((int)dia)" selected="@(item.DiaEmision == dia)">@nombre</option>
         }
+      </select>
     }
+  }
 
-    <div class="form-buttons">
-        <button type="submit" class="btn-add">@(EsEdicion ? "Guardar cambios" : "Guardar")</button>
-        <button type="button" class="btn-cancel" @onclick="Cancelar">Cancelar</button>
-    </div>
+  <div class="form-buttons">
+    <button type="submit" class="btn-add">@(EsEdicion ? "Guardar cambios" : "Guardar")</button>
+    <button type="button" class="btn-cancel" @onclick="Cancelar">Cancelar</button>
+  </div>
 </EditForm>
 
 @code {
-    [Parameter] public Guid? Id { get; set; }
+  [Parameter] public Guid? Id { get; set; }
 
-    private WatchlistItem item = new();
-    private bool EsEdicion => Id is not null;
+  private WatchlistItem item = new();
+  private bool EsEdicion => Id is not null;
 
-    protected override async Task OnInitializedAsync()
+  protected override async Task OnInitializedAsync()
+  {
+    if (EsEdicion)
     {
-        if (EsEdicion)
-        {
-            var existente = (await Storage.GetAllAsync()).FirstOrDefault(i => i.Id == Id);
-            if (existente is not null)
-                item = existente;
-        }
+      var existente = (await Storage.GetAllAsync()).FirstOrDefault(i => i.Id == Id);
+      if (existente is not null)
+        item = existente;
+    }
+  }
+
+  private void OnDiaEmisionChanged(ChangeEventArgs e)
+  {
+    if (int.TryParse(e.Value?.ToString(), out var valor) && valor >= 0)
+    {
+      item.DiaEmision = (DayOfWeek)valor;
+    }
+    else 
+    {
+      item.DiaEmision = null;
+    }
+  }
+  private async Task Guardar()
+  {
+    if (string.IsNullOrWhiteSpace(item.Titulo))
+      return;
+
+    if (item.Tipo == TipoContenido.Pelicula)
+    {
+      item.EpisodioInicio = null;
+      item.EpisodioFin = null;
+      item.EnEmision = false;
+      item.DiaEmision = null;
+    }
+    else
+    {
+      // Si el rango es invalido, no permite guardar
+      if (item.EpisodioInicio is null || item.EpisodioFin is null || item.EpisodioFin < item.EpisodioInicio)
+        return;
+
+      // Limpia episodios marcados que quedaron fuera del nuevo rango (ej. al editar)
+      item.EpisodiosVistos = item.EpisodiosVistos
+          .Where(e => e >= item.EpisodioInicio && e <= item.EpisodioFin)
+          .ToList();
+      
+      if (!item.EnEmision)
+        item.DiaEmision = null;
     }
 
-    private async Task Guardar()
-    {
-        if (string.IsNullOrWhiteSpace(item.Titulo))
-            return;
+    if (EsEdicion)
+      await Storage.UpdateAsync(item);
+    else
+      await Storage.AddAsync(item);
 
-        if (item.Tipo == TipoContenido.Pelicula)
-        {
-            item.EpisodioInicio = null;
-            item.EpisodioFin = null;
-        }
-        else
-        {
-            // Si el rango es invalido, no permite guardar
-            if (item.EpisodioInicio is null || item.EpisodioFin is null || item.EpisodioFin < item.EpisodioInicio)
-                return;
+    Nav.NavigateTo("/");
+  }
 
-            // Limpia episodios marcados que quedaron fuera del nuevo rango (ej. al editar)
-            item.EpisodiosVistos = item.EpisodiosVistos
-                .Where(e => e >= item.EpisodioInicio && e <= item.EpisodioFin)
-                .ToList();
-        }
-
-        if (EsEdicion)
-            await Storage.UpdateAsync(item);
-        else
-            await Storage.AddAsync(item);
-
-        Nav.NavigateTo("/");
-    }
-
-    private void Cancelar() => Nav.NavigateTo("/");
+  private void Cancelar() => Nav.NavigateTo("/");
 }

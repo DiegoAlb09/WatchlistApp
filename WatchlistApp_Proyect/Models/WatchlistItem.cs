@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace WatchlistApp.Models;
+namespace WatchlistApp_Proyect.Models;
 
 public enum TipoContenido
 {

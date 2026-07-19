@@ -9,12 +9,13 @@
     <Icon Name="film" /> Mi Watchlist
   </h1>
   <div class="header-actions">
+    <button class="btn-random" @onclick="() => mostrarCalendario = true" title="Ver calendario de estrenos">
+      <Icon Name="calendar" /><span>Calendario</span>
+    </button>
     <button class="btn-random" @onclick="ElegirAlAzar" title="Elegir una al azar entre lo pendiente">
       <Icon Name="dice" /><span>Sorpréndeme</span>
     </button>
-    <button class="btn-add" @onclick="IrAAgregar">
-      + Agregar Serie/Película
-    </button>
+    <button class="btn-add" @onclick="IrAAgregar">+ Agregar Serie/Película</button>
   </div>
 </div>
 
@@ -83,7 +84,13 @@ else
             </div>
             <div class="card-body">
               <h3>@item.Titulo</h3>
-              <p class="tipo-tag">@(item.Tipo == TipoContenido.Serie ? "Serie" : "Película")</p>
+              <p class="tipo-tag">
+                @(item.Tipo == TipoContenido.Serie ? "Serie" : "Película")
+                @if (item.Tipo == TipoContenido.Serie && item.EnEmision)
+                {
+                  <span class="tag-emision">EN EMISIÓN</span>
+                }
+              </p>
 
               @if (item.Tipo == TipoContenido.Serie && item.EpisodioInicio is not null && item.EpisodioFin is not null)
               {
@@ -151,6 +158,7 @@ else
   }
 }
 
+@* ===== Modal: Sorpréndeme ===== *@
 @if (sorpresa is not null)
 {
   <div class="modal-overlay" @onclick="CerrarModal">
@@ -182,6 +190,55 @@ else
   </div>
 }
 
+@* ===== Modal: Calendario de estrenos ===== *@
+@if (mostrarCalendario)
+{
+  <div class="modal-overlay" @onclick="() => mostrarCalendario = false">
+    <div class="modal-card modal-card-lg" @onclick:stopPropagation="true">
+      <div class="modal-header-row">
+        <h3>
+          <Icon Name="calendar" /> Calendario de estrenos
+        </h3>
+        <button class="modal-close-x" @onclick="() => mostrarCalendario = false">✕</button>
+      </div>
+
+      @if (!SeriesEnEmision.Any())
+      {
+        <p class="empty-msg">
+          No tienes series marcadas como "En emisión" todavía.
+          Edita una serie y activa esa opción para que aparezca aquí.
+        </p>
+      }
+      else
+      {
+        <div class="calendario-lista">
+          @foreach (var (dia, nombre) in DiasEmision.Todos)
+          {
+            var seriesDelDia = SeriesEnEmision.Where(s => s.DiaEmision == dia).ToList();
+            var esHoy = dia == DateTime.Now.DayOfWeek;
+            <div class="calendario-dia @(esHoy ? "calendario-hoy" : "")">
+              <span class="calendario-dia-nombre">@nombre @(esHoy ? "· Hoy" : "")</span>
+              @if (seriesDelDia.Count == 0)
+              {
+                <span class="calendario-vacio">—</span>
+              }
+              else
+              {
+                <div class="calendario-chips">
+                  @foreach (var s in seriesDelDia)
+                  {
+                    <span class="calendario-chip">@s.Titulo</span>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+}
+
 @code {
   private const string PrefsKey = "watchlist-ui-prefs";
 
@@ -192,8 +249,15 @@ else
   private string busqueda = "";
   private string orden = "reciente";
 
+  // ===== Boton "Sorprendeme" =====
   private WatchlistItem? sorpresa;
   private Guid? ultimoElegidoId;
+
+  // ===== Modal calendario =====
+  private bool mostrarCalendario = false;
+
+  private IEnumerable<WatchlistItem> SeriesEnEmision =>
+      (items ?? new()).Where(i => i.Tipo == TipoContenido.Serie && i.EnEmision && i.DiaEmision is not null);
 
   private class PreferenciasUI
   {
@@ -349,6 +413,7 @@ else
     items = await Storage.GetAllAsync();
   }
 
+  // ===== Boton "Sorprendeme" =====
   private async Task ElegirAlAzar()
   {
     var candidatos = (items ?? new()).Where(i => !i.EstaCompleta).ToList();
@@ -359,7 +424,6 @@ else
       await JS.InvokeVoidAsync("alert", "No tienes series o películas pendientes por ver.");
       return;
     }
-
 
     var opciones = (candidatos.Count > 1 && ultimoElegidoId is not null)
       ? candidatos.Where(i => i.Id != ultimoElegidoId).ToList()

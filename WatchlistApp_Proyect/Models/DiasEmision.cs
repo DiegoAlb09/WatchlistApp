@@ -1,4 +1,4 @@
-namespace WatchlistApp.Models;
+namespace WatchlistApp_Proyect.Models;
 
 /// <summary>
 /// Lista de dias de la semana en espanol, en orden Lunes-Domingo (a diferencia
