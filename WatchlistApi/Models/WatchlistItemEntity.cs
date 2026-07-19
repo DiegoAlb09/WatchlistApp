@@ -18,5 +18,9 @@ public class WatchlistItemEntity
   public bool Visto { get; set; }
 
   public List<int> EpisodiosVistos { get; set; } = new();
+
+  // Solo aplica si Tipo == Serie: para el calendario de estrenos
+  public bool EnEmision { get; set; }
+  public DayOfWeek? DiaEmision { get; set; }
   public DateTime FechaAgregado { get; set; } = DateTime.UtcNow;
 }

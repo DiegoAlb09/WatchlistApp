@@ -27,7 +27,7 @@ public class WatchlistController : ControllerBase
   public async Task<ActionResult> Create(WatchlistItemEntity item)
   {
     if (item.Id == Guid.Empty)
-        item.Id = Guid.NewGuid();
+      item.Id = Guid.NewGuid();
 
     _db.WatchlistItems.Add(item);
     await _db.SaveChangesAsync();
@@ -39,8 +39,8 @@ public class WatchlistController : ControllerBase
   {
     var existente = await _db.WatchlistItems.FindAsync(id);
     if (existente is null)
-        return NotFound();
-    
+      return NotFound();
+
     existente.Titulo = item.Titulo;
     existente.PortadaUrl = item.PortadaUrl;
     existente.Tipo = item.Tipo;
@@ -48,6 +48,8 @@ public class WatchlistController : ControllerBase
     existente.EpisodioFin = item.EpisodioFin;
     existente.Visto = item.Visto;
     existente.EpisodiosVistos = item.EpisodiosVistos;
+    existente.EnEmision = item.EnEmision;
+    existente.DiaEmision = item.DiaEmision;
 
     await _db.SaveChangesAsync();
     return Ok(existente);
@@ -58,15 +60,15 @@ public class WatchlistController : ControllerBase
   {
     var existente = await _db.WatchlistItems.FindAsync(id);
     if (existente is null)
-        return NotFound();
-    
+      return NotFound();
+
     _db.WatchlistItems.Remove(existente);
     await _db.SaveChangesAsync();
     return Ok();
   }
 
   // Usado una sola vez por el cliente para migrar lo que tenia en localStorage.
-  // es idempotente: si el Id ya existe en la base de datos, lo ignora (no duplica).
+  // Es idempotente: si el Id ya existe en la base de datos, lo ignora (no duplica).
   [HttpPost("importar")]
   public async Task<ActionResult> Importar(List<WatchlistItemEntity> items)
   {
@@ -80,5 +82,4 @@ public class WatchlistController : ControllerBase
     await _db.SaveChangesAsync();
     return Ok();
   }
-  
 }
