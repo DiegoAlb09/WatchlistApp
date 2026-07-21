@@ -1,0 +1,247 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  background: var(--card-bg);
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.cover {
+  height: 200px;
+  background-size: cover;
+  background-position: center;
+  background-color: var(--input-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+}
+.cover .icon {
+  width: 40px;
+  height: 40px;
+}
+
+.card-body {
+  padding: 10px var(--space-md);
+}
+
+.card-body h3 {
+  font-size: 0.95rem;
+  margin: 0 0 4px;
+  color: var(--text);
+  font-weight: 600;
+  line-height: 1.3;
+  overflow-wrap: break-word;
+  min-height: 2.4em;
+}
+
+.tipo-tag {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--accent2);
+  margin: 0 0 4px;
+  font-weight: 600;
+}
+.episodios {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin: 0 0 8px;
+}
+
+.card-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.seccion-completados {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: 1rem;
+  color: var(--muted);
+  margin: 24px 0 10px;
+}
+.seccion-completados .icon {
+  width: 18px;
+  height: 18px;
+  color: #2ecc71;
+}
+.completados-compactos {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.card-compacto {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--card-bg);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  font-size: 0.85rem;
+}
+.check-ok {
+  color: #2ecc71;
+  display: flex;
+}
+.titulo-compacto {
+  flex: 1;
+  color: var(--text);
+}
+
+.tag-emision {
+  display: inline-block;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: white;
+  background: #2ecc71;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+/* ===== Checklist "Vista" (peliculas) y episodios (series) ===== */
+.visto-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+  cursor: pointer;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+.visto-check input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  border: 2px solid var(--muted);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+.visto-check input[type="checkbox"]:checked {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.visto-check input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 0px;
+  width: 5px;
+  height: 9px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.episodios-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 8px;
+  max-height: 90px;
+  overflow-y: auto;
+}
+.ep-check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.7rem;
+  color: var(--muted);
+  cursor: pointer;
+  position: relative;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+.ep-check input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+.ep-check:has(input:checked) {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
+/* ===== Calendario de estrenos (dentro del modal) ===== */
+.calendario-lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  width: 100%;
+  text-align: left;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.calendario-dia {
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+}
+.calendario-dia.calendario-hoy {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--input-bg));
+}
+
+.calendario-dia-nombre {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.calendario-hoy .calendario-dia-nombre {
+  color: var(--accent);
+}
+
+.calendario-vacio {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.calendario-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.calendario-chip {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  color: var(--text);
+}
