@@ -1,6 +1,7 @@
 @page "/libros"
 @using System.Text.Json
 @inject LibraryStorageService Storage
+@inject HistorialService Historial
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
@@ -111,8 +112,6 @@
     public string? Orden { get; set; }
   }
 
-  // Los que no tienen meta definida (CapituloFin null -> Porcentaje null) se consideran
-  // "sin avance cuantificable" y quedan al final al ordenar por avance.
   private static double AvanceOrdenable(LibroItem i) => i.Porcentaje ?? -1;
 
   private IEnumerable<LibroItem> ItemsFiltrados
@@ -204,12 +203,19 @@
 
   private async Task CambiarCapitulo(LibroItem libro, int delta)
   {
+    var anterior = libro.CapituloActual;
+
     var nuevo = libro.CapituloActual + delta;
     if (nuevo < libro.CapituloInicio) nuevo = libro.CapituloInicio;
     if (libro.CapituloFin is not null && nuevo > libro.CapituloFin) nuevo = libro.CapituloFin.Value;
 
     libro.CapituloActual = nuevo;
     await Storage.UpdateAsync(libro);
+
+    // Solo se registra en el historial cuando el capitulo REALMENTE avanza
+    // (nunca al retroceder con el boton "-", ni cuando ya estaba en el limite).
+    if (nuevo > anterior)
+      await Historial.RegistrarAsync(libro.Id, libro.Titulo);
   }
 
   private async Task Eliminar(Guid id, string titulo)

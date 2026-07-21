@@ -1,6 +1,7 @@
 ﻿@page "/"
 @using System.Text.Json
 @inject LocalStorageService Storage
+@inject HistorialService Historial
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
@@ -50,7 +51,7 @@ else
 
   <div class="search-sort">
     <input type="text" class="search-input" placeholder="Buscar por título..." value="@busqueda"
-          @oninput="OnBusquedaChanged" />
+           @oninput="OnBusquedaChanged" />
     <select class="sort-select" value="@orden" @onchange="OnOrdenChanged">
       <option value="reciente">Más recientes primero</option>
       <option value="antiguos">Más antiguos primero</option>
@@ -104,7 +105,7 @@ else
                     var epNum = ep;
                     <label class="ep-check" title="Episodio @epNum">
                       <input type="checkbox" checked="@item.EpisodiosVistos.Contains(epNum)"
-                            @onchange="e => MarcarEpisodio(item, epNum, (bool)e.Value!)" />
+                             @onchange="e => MarcarEpisodio(item, epNum, (bool)e.Value!)" />
                       @epNum
                     </label>
                   }
@@ -387,6 +388,10 @@ else
   {
     item.Visto = valor;
     await Storage.UpdateAsync(item);
+
+    // Solo se registra en el historial cuando SE MARCA como vista, nunca al desmarcarla.
+    if (valor)
+      await Historial.RegistrarAsync(item.Id, item.Titulo);
   }
 
   private async Task MarcarEpisodio(WatchlistItem item, int episodio, bool marcado)
@@ -401,6 +406,10 @@ else
       item.EpisodiosVistos.Remove(episodio);
     }
     await Storage.UpdateAsync(item);
+
+    // Solo se registra en el historial cuando SE MARCA el episodio, nunca al desmarcarlo.
+    if (marcado)
+      await Historial.RegistrarAsync(item.Id, item.Titulo);
   }
 
   private async Task Eliminar(Guid id, string titulo)
@@ -426,8 +435,8 @@ else
     }
 
     var opciones = (candidatos.Count > 1 && ultimoElegidoId is not null)
-      ? candidatos.Where(i => i.Id != ultimoElegidoId).ToList()
-      : candidatos;
+        ? candidatos.Where(i => i.Id != ultimoElegidoId).ToList()
+        : candidatos;
 
     if (opciones.Count == 0)
       opciones = candidatos;

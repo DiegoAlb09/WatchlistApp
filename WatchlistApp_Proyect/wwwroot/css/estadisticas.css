@@ -4,7 +4,7 @@
   margin: var(--space-xl) 0 var(--space-md);
 }
 
-
+/* ===== Tarjetas de resumen ===== */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
@@ -30,7 +30,7 @@
   text-align: center;
 }
 
-
+/* ===== Grafica de dona ===== */
 .donuts-row {
   display: flex;
   gap: var(--space-lg);
@@ -98,6 +98,7 @@
   color: var(--muted);
 }
 
+/* ===== Grafica de barras ===== */
 .bar-chart {
   background: var(--card-bg);
   border-radius: var(--radius-lg);
@@ -132,4 +133,10 @@
   color: var(--text);
   font-weight: 600;
   text-align: right;
+}
+
+.bloque-detalle {
+  display: block;
+  text-align: center;
+  margin-top: var(--space-sm);
 }
