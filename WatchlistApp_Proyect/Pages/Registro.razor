@@ -1,0 +1,87 @@
+@page "/registro"
+@layout AuthLayout
+@inject AuthService Auth
+@inject AuthenticationStateProvider AuthProvider
+@inject NavigationManager Nav
+
+<div class="auth-page">
+  <div class="auth-card">
+    <h1>
+      <Icon Name="film" /> Mi Watchlist
+    </h1>
+    <p class="auth-subtitle">Crea tu cuenta para empezar</p>
+
+    <EditForm Model="modelo" OnValidSubmit="Enviar" class="form-agregar">
+      <label>Correo</label>
+      <input type="email" @bind="modelo.Email" placeholder="tu@correo.com" />
+
+      <label>Contraseña</label>
+      <input type="password" @bind="modelo.Password" placeholder="Mínimo 6 caracteres" />
+
+      <label>Confirmar contraseña</label>
+      <input type="password" @bind="confirmacion" placeholder="Repite tu contraseña" />
+
+      @if (!string.IsNullOrWhiteSpace(error))
+      {
+        <p class="rango-error">@error</p>
+      }
+
+      <div class="form-buttons">
+        <button type="submit" class="btn-add" disabled="@cargando">
+          @(cargando ? "Creando cuenta..." : "Registrarme")
+        </button>
+      </div>
+    </EditForm>
+
+    <p class="auth-footer">¿Ya tienes cuenta? <a href="/login">Inicia sesión</a></p>
+  </div>
+</div>
+
+@code {
+  private class Modelo
+  {
+    public string Email { get; set; } = "";
+    public string Password { get; set; } = "";
+  }
+
+  private Modelo modelo = new();
+  private string confirmacion = "";
+  private string? error;
+  private bool cargando;
+
+  protected override async Task OnInitializedAsync()
+  {
+    var estado = await AuthProvider.GetAuthenticationStateAsync();
+    if (estado.User.Identity?.IsAuthenticated == true)
+      Nav.NavigateTo("/");
+  }
+
+  private async Task Enviar()
+  {
+    error = null;
+
+    if (modelo.Password != confirmacion)
+    {
+      error = "Las contraseñas no coinciden.";
+      return;
+    }
+
+    if (modelo.Password.Length < 6)
+    {
+      error = "La contraseña debe tener al menos 6 caracteres.";
+      return;
+    }
+
+    cargando = true;
+    var resultado = await Auth.RegistrarAsync(modelo.Email, modelo.Password);
+    cargando = false;
+
+    if (!resultado.Exitoso)
+    {
+      error = resultado.Error;
+      return;
+    }
+
+    Nav.NavigateTo("/", forceLoad: true);
+  }
+}
