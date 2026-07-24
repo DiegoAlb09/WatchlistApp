@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WatchlistApi.Data;
@@ -7,6 +9,7 @@ namespace WatchlistApi.Controllers;
 
 [ApiController]
 [Route("api/watchlist")]
+[Authorize]
 public class WatchlistController : ControllerBase
 {
   private readonly AppDbContext _db;
@@ -16,10 +19,15 @@ public class WatchlistController : ControllerBase
     _db = db;
   }
 
+  private string UserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
+
   [HttpGet]
   public async Task<ActionResult<List<WatchlistItemEntity>>> GetAll()
   {
-    var items = await _db.WatchlistItems.OrderBy(i => i.FechaAgregado).ToListAsync();
+    var items = await _db.WatchlistItems
+        .Where(i => i.UserId == UserId)
+        .OrderBy(i => i.FechaAgregado)
+        .ToListAsync();
     return Ok(items);
   }
 
@@ -28,6 +36,7 @@ public class WatchlistController : ControllerBase
   {
     if (item.Id == Guid.Empty)
       item.Id = Guid.NewGuid();
+    item.UserId = UserId;
 
     _db.WatchlistItems.Add(item);
     await _db.SaveChangesAsync();
@@ -37,7 +46,7 @@ public class WatchlistController : ControllerBase
   [HttpPut("{id:guid}")]
   public async Task<ActionResult> Update(Guid id, WatchlistItemEntity item)
   {
-    var existente = await _db.WatchlistItems.FindAsync(id);
+    var existente = await _db.WatchlistItems.FirstOrDefaultAsync(i => i.Id == id && i.UserId == UserId);
     if (existente is null)
       return NotFound();
 
@@ -58,7 +67,7 @@ public class WatchlistController : ControllerBase
   [HttpDelete("{id:guid}")]
   public async Task<ActionResult> Delete(Guid id)
   {
-    var existente = await _db.WatchlistItems.FindAsync(id);
+    var existente = await _db.WatchlistItems.FirstOrDefaultAsync(i => i.Id == id && i.UserId == UserId);
     if (existente is null)
       return NotFound();
 
@@ -68,7 +77,6 @@ public class WatchlistController : ControllerBase
   }
 
   // Usado una sola vez por el cliente para migrar lo que tenia en localStorage.
-  // Es idempotente: si el Id ya existe en la base de datos, lo ignora (no duplica).
   [HttpPost("importar")]
   public async Task<ActionResult> Importar(List<WatchlistItemEntity> items)
   {
@@ -76,7 +84,10 @@ public class WatchlistController : ControllerBase
     {
       var yaExiste = await _db.WatchlistItems.AnyAsync(i => i.Id == item.Id);
       if (!yaExiste)
+      {
+        item.UserId = UserId;
         _db.WatchlistItems.Add(item);
+      }
     }
 
     await _db.SaveChangesAsync();
