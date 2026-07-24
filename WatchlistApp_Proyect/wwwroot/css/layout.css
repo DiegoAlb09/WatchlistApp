@@ -1,7 +1,3 @@
-/* LAYOUT: estructura de pagina (navbar, main, encabezados). Compartido por
-  TODAS las paginas (Home, AddItem, Libros, AgregarLibro).
-*/
-
 .topbar {
   display: flex;
   justify-content: space-between;
@@ -10,7 +6,10 @@
   background: var(--card-bg);
   border-bottom: 1px solid var(--border);
 }
-.navbar { display: flex; gap: var(--space-sm); }
+.navbar {
+  display: flex;
+  gap: var(--space-sm);
+}
 .navbar a {
   display: flex;
   align-items: center;
@@ -26,6 +25,17 @@
   color: white;
   background: var(--accent);
 }
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+.usuario-email {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
 .theme-toggle {
   display: flex;
   align-items: center;
@@ -62,6 +72,13 @@ h1 {
   align-items: center;
   gap: 10px;
 }
-h1 .icon { width: 24px; height: 24px; }
+h1 .icon {
+  width: 24px;
+  height: 24px;
+}
 
-.empty-msg { color: var(--muted); text-align: center; margin-top: 40px; }
+.empty-msg {
+  color: var(--muted);
+  text-align: center;
+  margin-top: 40px;
+}
