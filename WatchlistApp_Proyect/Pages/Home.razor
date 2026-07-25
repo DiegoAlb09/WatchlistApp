@@ -1,4 +1,7 @@
 ﻿@page "/"
+
+@attribute [Authorize]
+
 @using System.Text.Json
 @inject LocalStorageService Storage
 @inject HistorialService Historial

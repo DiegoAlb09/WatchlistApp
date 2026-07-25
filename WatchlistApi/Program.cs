@@ -1,5 +1,9 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using WatchlistApi.Data;
+using WatchlistApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,6 +24,42 @@ Console.WriteLine($"[WatchlistApi] Usando base de datos en: {dbPath}");
 builder.Services.AddDbContext<AppDbContext>(opt =>
     opt.UseSqlite($"Data Source={dbPath}"));
 
+// Identity: solo para gestionar usuarios/contraseñas (hashing, etc.).
+// El registro/login los maneja AuthController a mano, generando un JWT propio
+// no usamos los endpoints integrados de Identity (MapIdentityApi) porque sus
+// reglas de cookies/tokens para SPA's son mas dificiles de controlar
+builder.Services
+  .AddIdentityCore<ApplicationUser>(options =>
+  {
+    options.SignIn.RequireConfirmedEmail = false;
+    options.SignIn.RequireConfirmedAccount = false;
+    options.Password.RequiredLength = 6; // razonable para desarrollo local
+  })
+  .AddEntityFrameworkStores<AppDbContext>();
+
+// Autenticacion por JWT Bearer
+var jwtKey = builder.Configuration["Jwt:Key"]
+  ?? throw new InvalidOperationException("Falta configurar Jwt:Key en appsettings.json");
+
+builder.Services
+  .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+  .AddJwtBearer(options =>
+  {
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+      ValidateIssuer = true,
+      ValidIssuer = builder.Configuration["Jwt:Issuer"],
+      ValidateAudience = true,
+      ValidAudience = builder.Configuration["Jwt:Audience"],
+      ValidateIssuerSigningKey = true,
+      IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+      ValidateLifetime = true,
+      ClockSkew = TimeSpan.Zero      
+    };
+  });
+
+builder.Services.AddAuthorization();
+
 // CORS abierto: valido para desarrollo local. Si algun dia se publica el backend
 // a internet, esto deberia restringirse a los origenes reales del frontend.
 builder.Services.AddCors(opt =>
@@ -35,6 +75,10 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseCors("DevCors");
+
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.MapControllers();
 
 app.Run();

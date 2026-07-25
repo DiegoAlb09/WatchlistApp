@@ -10,6 +10,7 @@ public enum TipoLibro
 public class LibroItemEntity
 {
   public Guid Id { get; set; }
+  public string? UserId { get; set; }
   public string Titulo { get; set; } = string.Empty;
   public string PortadaUrl { get; set; } = string.Empty;
   public TipoLibro Tipo { get; set; } = TipoLibro.Libro;

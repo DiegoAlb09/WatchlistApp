@@ -14,6 +14,8 @@
 .form-agregar input[type="text"],
 .form-agregar input[type="url"],
 .form-agregar input[type="number"],
+.form-agregar input[type="email"],
+.form-agregar input[type="password"],
 .rango-episodios input,
 .search-input,
 .sort-select {
@@ -30,6 +32,8 @@
 .form-agregar input[type="text"]:hover,
 .form-agregar input[type="url"]:hover,
 .form-agregar input[type="number"]:hover,
+.form-agregar input[type="email"]:hover,
+.form-agregar input[type="password"]:hover,
 .rango-episodios input:hover,
 .search-input:hover,
 .sort-select:hover {
@@ -38,6 +42,8 @@
 .form-agregar input[type="text"]:focus,
 .form-agregar input[type="url"]:focus,
 .form-agregar input[type="number"]:focus,
+.form-agregar input[type="email"]:focus,
+.form-agregar input[type="password"]:focus,
 .rango-episodios input:focus,
 .search-input:focus,
 .sort-select:focus {

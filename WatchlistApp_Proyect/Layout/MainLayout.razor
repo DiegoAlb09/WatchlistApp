@@ -1,25 +1,37 @@
 ﻿@inherits LayoutComponentBase
 @inject IJSRuntime JS
+@inject AuthService Auth
+@inject NavigationManager Nav
 
 <div class="topbar">
   <nav class="navbar">
     <NavLink href="/" Match="NavLinkMatch.All">
-      <Icon Name="film"></Icon><span>Series y Películas</span>
+      <Icon Name="film" /><span>Series y Películas</span>
     </NavLink>
     <NavLink href="/libros">
-      <Icon Name="book"></Icon><span>Libros, Manga y Cómics</span>
+      <Icon Name="book" /><span>Libros, Manga y Cómics</span>
     </NavLink>
     <NavLink href="/estadisticas">
-      <Icon Name="chart"></Icon><span>Estadísticas</span>
+      <Icon Name="chart" /><span>Estadísticas</span>
     </NavLink>
   </nav>
-  <button class="theme-toggle" title="Cambiar tema" @onclick="ToggleTheme">
-    <Icon Name="@(esOscuro ? "sun" : "moon")" />
-  </button>
+  <div class="topbar-right">
+    <AuthorizeView>
+      <Authorized>
+        <span class="usuario-email">@context.User.FindFirst("email")?.Value</span>
+        <button class="btn-random" @onclick="CerrarSesion">Salir</button>
+      </Authorized>
+    </AuthorizeView>
+    <button class="theme-toggle" title="Cambiar tema" @onclick="ToggleTheme">
+      <Icon Name="@(esOscuro ? "sun" : "moon")" />
+    </button>
+  </div>
 </div>
 
 <div class="page">
-  <main>@Body</main>
+  <main>
+    @Body
+  </main>
 </div>
 
 @code {
@@ -35,5 +47,11 @@
   {
     esOscuro = !esOscuro;
     await JS.InvokeVoidAsync("themeInterop.set", esOscuro ? "dark" : "light");
+  }
+
+  private async Task CerrarSesion()
+  {
+    await Auth.CerrarSesionAsync();
+    Nav.NavigateTo("/login", forceLoad: true);
   }
 }

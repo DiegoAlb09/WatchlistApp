@@ -9,6 +9,7 @@ public enum TipoContenido
 public class WatchlistItemEntity
 {
   public Guid Id { get; set; }
+  public string? UserId { get; set; }
   public string Titulo { get; set; } = string.Empty;
   public string PortadaUrl { get; set; } = string.Empty;
   public TipoContenido Tipo { get; set; } = TipoContenido.Pelicula;
