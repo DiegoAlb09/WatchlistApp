@@ -2,7 +2,7 @@
 
 Aplicación web para llevar el control de series, películas, libros, manga y cómics pendientes por ver/leer. Permite agregar títulos, clasificarlos, llevar un rango o avance de capítulos, ver el progreso general y estadísticas con gráficas, elegir algo al azar para ver, y llevar un calendario (semanal o mensual) de qué series están en emisión — todo con modo oscuro/claro.
 
-Los datos ya **no viven solo en el navegador**: hay un backend real (ASP.NET Core Web API + SQLite + migraciones de EF Core) que los guarda de forma persistente. La primera vez que corras la app, cualquier dato que tuvieras en `localStorage` se migra automáticamente al backend, sin borrarse (queda de respaldo).
+Los datos ya **no viven solo en el navegador**: hay un backend real (ASP.NET Core Web API + SQLite + migraciones de EF Core) que los guarda de forma persistente, con **cuentas de usuario** — cada quien ve solo su propia watchlist, y puede acceder a ella desde cualquier dispositivo iniciando sesión. La primera vez que corras la app, cualquier dato que tuvieras en `localStorage` se migra automáticamente a tu cuenta, sin borrarse (queda de respaldo).
 
 ---
 
@@ -11,6 +11,14 @@ Los datos ya **no viven solo en el navegador**: hay un backend real (ASP.NET Cor
 ### Navegación
 - Navbar superior con tres pestañas: **Series/Películas**, **Libros/Manga/Cómics** y **Estadísticas**.
 - Botón de **modo oscuro/claro**, con la preferencia guardada en `localStorage`.
+
+### 🔐 Cuentas y sincronización
+- Registro e inicio de sesión con correo y contraseña (ASP.NET Core Identity + JWT).
+- Cada usuario ve **solo su propia watchlist** — series, libros, e historial quedan asociados a su cuenta.
+- Inicia sesión desde cualquier navegador/dispositivo y ves los mismos datos (no es sincronización en tiempo real: se actualiza al recargar/navegar, no mientras tienes la pestaña abierta).
+- El token de sesión dura 30 días; si vence, la app te regresa sola a la pantalla de login.
+- La primera cuenta que se registra **adopta automáticamente** cualquier dato que ya existiera en el backend antes de que hubiera login (de cuando la app aún no tenía cuentas).
+- Las preferencias de interfaz (filtro, orden, tema) **no sincronizan** — son por navegador, no por cuenta.
 
 ### 🎬 Series y Películas
 - Barra de progreso general, ponderada por capítulos vistos y películas vistas.
@@ -52,7 +60,8 @@ Los datos ya **no viven solo en el navegador**: hay un backend real (ASP.NET Cor
 
 ### Persistencia
 - **Backend real**: ASP.NET Core Web API + Entity Framework Core + SQLite, con **migraciones reales** (`dotnet ef migrations add ...`) en vez de recrear la base de datos a mano en cada cambio de modelo.
-- La app migra automáticamente los datos viejos de `localStorage` al backend la primera vez que corre.
+- **Autenticación**: ASP.NET Core Identity + JWT propio (no los endpoints integrados de Identity, por las reglas de cookies/tokens que complican una SPA). Cada tabla (`WatchlistItems`, `LibroItems`, `HistorialVistos`) tiene un `UserId` que filtra todo por el usuario autenticado.
+- La app migra automáticamente los datos viejos de `localStorage` a tu cuenta la primera vez que corre.
 - Las preferencias de interfaz (filtro/orden/búsqueda/compactar) siguen viviendo en `localStorage`.
 
 ---
@@ -68,7 +77,8 @@ Los datos ya **no viven solo en el navegador**: hay un backend real (ASP.NET Cor
 **Backend**
 - ASP.NET Core Web API (.NET 8)
 - Entity Framework Core + SQLite, con migraciones (`dotnet ef`)
-- CORS abierto para desarrollo local (sin autenticación todavía)
+- ASP.NET Core Identity + JWT Bearer para autenticación
+- CORS abierto para desarrollo local
 
 ---
 
@@ -77,6 +87,17 @@ Los datos ya **no viven solo en el navegador**: hay un backend real (ASP.NET Cor
 Requiere el [.NET SDK 8.0](https://dotnet.microsoft.com/download) y la herramienta `dotnet-ef` (`dotnet tool install --global dotnet-ef`). Se necesitan **dos terminales abiertas al mismo tiempo**.
 
 **Terminal 1 — Backend:**
+
+Primero, configura la clave del JWT como variable de entorno (nunca vive en el código ni en `appsettings.json`, que sí se sube al repo):
+```powershell
+# PowerShell — para la sesión actual
+$env:Jwt__Key = "escribe-aqui-una-clave-larga-de-al-menos-32-caracteres"
+
+# O para que quede permanente (requiere abrir una terminal nueva después)
+setx Jwt__Key "escribe-aqui-una-clave-larga-de-al-menos-32-caracteres"
+```
+Nota el **doble guion bajo** (`Jwt__Key`) — es la convención de ASP.NET Core para mapear una variable de entorno a una clave anidada (`Jwt:Key`). Si se te olvida configurarla, el backend no arranca y te lo dice explícitamente en la consola.
+
 ```bash
 cd WatchlistApi
 dotnet restore
@@ -108,11 +129,15 @@ Watchlist/                       ← raíz del repo (.git aquí)
 │   │   ├── WatchlistItem.cs          # incluye EnEmision, DiaEmision
 │   │   ├── LibroItem.cs
 │   │   ├── HistorialVisto.cs
-│   │   └── DiasEmision.cs            # helper: dias de la semana en espanol
+│   │   ├── DiasEmision.cs            # helper: dias de la semana en espanol
+│   │   └── AuthResponse.cs           # respuesta de login/registro (token + email)
 │   ├── Services/
 │   │   ├── LocalStorageService.cs    # habla con el backend + migra localStorage
 │   │   ├── LibraryStorageService.cs
-│   │   └── HistorialService.cs       # solo GetAll y Registrar (append-only)
+│   │   ├── HistorialService.cs       # solo GetAll y Registrar (append-only)
+│   │   ├── AuthService.cs            # registro, login, logout
+│   │   ├── CustomAuthStateProvider.cs # decodifica el JWT de localStorage
+│   │   └── AuthTokenHandler.cs       # adjunta el token a cada peticion HTTP
 │   ├── Pages/
 │   │   ├── Home.razor                # tag emision, calendario semana/mes, sorprendeme
 │   │   ├── Home.razor.css            # CSS aislado: tarjetas, checklist, calendario
@@ -121,9 +146,13 @@ Watchlist/                       ← raíz del repo (.git aquí)
 │   │   ├── Libros.razor.css          # CSS aislado: diseño de lista, stepper
 │   │   ├── AgregarLibro.razor
 │   │   ├── Estadisticas.razor        # tarjetas + donas + barras + vistas por mes
-│   │   └── Estadisticas.razor.css    # CSS aislado: solo lo que renderiza esta pagina
+│   │   ├── Estadisticas.razor.css    # CSS aislado: solo lo que renderiza esta pagina
+│   │   ├── Login.razor               # publica, sin @attribute [Authorize]
+│   │   └── Registro.razor            # publica, sin @attribute [Authorize]
 │   ├── Shared/
-│   │   ├── MainLayout.razor
+│   │   ├── MainLayout.razor          # correo del usuario + boton Salir
+│   │   ├── AuthLayout.razor          # layout sin navbar (Login/Registro)
+│   │   ├── RedirectToLogin.razor     # redirige a /login si no hay sesion
 │   │   ├── Icon.razor
 │   │   ├── DonutChart.razor
 │   │   ├── DonutChart.razor.css      # CSS aislado propio (componente hijo)
@@ -134,21 +163,25 @@ Watchlist/                       ← raíz del repo (.git aquí)
 │       │   ├── app.css               # solo @import de lo verdaderamente compartido
 │       │   ├── tokens.css            # incluye .libros-theme (variables compartidas)
 │       │   ├── base.css / layout.css / buttons.css / forms.css / modal.css
+│       │   └── auth.css              # pantallas de Login/Registro
 │       └── js/theme.js
 │
 └── WatchlistApi/                ← Backend (ASP.NET Core Web API)
     ├── Models/
-    │   ├── WatchlistItemEntity.cs    # incluye EnEmision, DiaEmision
-    │   ├── LibroItemEntity.cs
-    │   └── HistorialVistoEntity.cs
+    │   ├── ApplicationUser.cs        # extiende IdentityUser
+    │   ├── WatchlistItemEntity.cs    # incluye EnEmision, DiaEmision, UserId
+    │   ├── LibroItemEntity.cs        # incluye UserId
+    │   └── HistorialVistoEntity.cs   # incluye UserId
     ├── Data/
-    │   └── AppDbContext.cs
+    │   └── AppDbContext.cs           # hereda de IdentityDbContext<ApplicationUser>
     ├── Controllers/
-    │   ├── WatchlistController.cs
-    │   ├── LibrosController.cs
-    │   └── HistorialController.cs    # solo GET y POST (append-only)
+    │   ├── AuthController.cs         # /api/auth/register, /api/auth/login
+    │   ├── WatchlistController.cs    # [Authorize], filtrado por UserId
+    │   ├── LibrosController.cs       # [Authorize], filtrado por UserId
+    │   └── HistorialController.cs    # [Authorize], filtrado por UserId
     ├── Migrations/                    # SI se sube a git (es codigo, no datos)
     ├── Program.cs
+    ├── appsettings.json               # Jwt:Key vacio - se llena por variable de entorno
     └── watchlist.db                   # se genera solo, no se sube al repo (.gitignore)
 ```
 
@@ -157,20 +190,16 @@ Watchlist/                       ← raíz del repo (.git aquí)
 ## 🚀 Roadmap — próximos pasos
 
 ### Publicar el backend y el frontend (acceso público)
-- [ ] Publicar el **backend** en un hosting que soporte ASP.NET Core (Azure App Service, Render, Railway, etc.).
+- [ ] Publicar el **backend** en un hosting que soporte ASP.NET Core (Azure App Service, Render, Railway, etc.), configurando `Jwt__Key` como variable de entorno ahí también.
 - [ ] Publicar el **frontend** en GitHub Pages o Azure Static Web Apps, apuntando su `HttpClient` a la URL pública del backend.
-- [ ] Restringir el CORS del backend a la URL real del frontend publicado.
+- [ ] Restringir el CORS del backend a la URL real del frontend publicado (ahora mismo está abierto con `AllowAnyOrigin`, válido solo para desarrollo local).
 - [ ] Evaluar si SQLite sigue siendo suficiente o conviene PostgreSQL/Azure SQL.
 
-### Login y sincronización entre dispositivos
-- [ ] Sistema de **autenticación** (ASP.NET Core Identity, o login con Google/GitHub vía OAuth).
-- [ ] Relacionar cada entidad con un usuario (`UserId`).
-- [ ] Cada usuario autenticado ve solo su propia watchlist.
-- [ ] Proteger los endpoints del backend (hoy son públicos).
-
 ### Otras ideas a futuro
+- [ ] Recuperar contraseña (`forgot password`) — hoy no existe, si se te olvida no hay forma de recuperarla sin tocar la base de datos a mano.
+- [ ] Sincronización en tiempo real (SignalR/WebSockets) — hoy los cambios se ven al recargar, no al instante entre dispositivos.
 - [ ] Notas personales por título.
-- [ ] Exportar/importar la watchlist como JSON (respaldo manual mientras no haya cuentas).
+- [ ] Exportar/importar la watchlist como JSON (respaldo manual).
 
 ---
 
