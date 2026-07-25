@@ -28,6 +28,9 @@
   padding: 0;
   text-align: left;
 }
+.auth-card .form-buttons {
+  justify-content: center;
+}
 .auth-footer {
   margin-top: var(--space-lg);
   font-size: 0.85rem;
