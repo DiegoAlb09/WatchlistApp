@@ -29,6 +29,11 @@ public class WatchlistItem
   public bool EnEmision { get; set; } = false;
   public DayOfWeek? DiaEmision { get; set; }
 
+  // Rango de fechas durante el cual la serie esta en emision.
+  // Null = sin limite en ese extremo (compatibilidad con datos viejos que no tenian fechas, o para series sin fecha de fin todavia definida).
+  public DateTime? FechaInicioEmision { get; set; }
+  public DateTime? FechaFinEmision { get; set; }
+
   public DateTime FechaAgregado { get; set; } = DateTime.Now;
 
   // --- Propiedades calculadas: no se guardan en localStorage/backend ---
