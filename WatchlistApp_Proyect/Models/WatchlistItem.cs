@@ -60,6 +60,12 @@ public class WatchlistItem
   // y (si hay fechas) hoy cae dentro del rango [FechaInicio, FechaFin].
   [JsonIgnore]
   public bool EnEmisionActiva => EnEmision && !EstaCompleta && 
-  (FechaInicioEmision is null || DateTime.Today >= FechaInicioEmision.Value.Date) &&
-  (FechaFinEmision is null || DateTime.Today <= FechaFinEmision.Value.Date);
+    (FechaInicioEmision is null || DateTime.Today >= FechaInicioEmision.Value.Date) &&
+    (FechaFinEmision is null || DateTime.Today <= FechaFinEmision.Value.Date);
+
+  // Se muestra el tag "Finalizado" si ya paso la fecha final o si ya se
+  // vieron todos los capitulos, aunque siga marcada como "En emision".
+  [JsonIgnore]
+  public bool EmisionFinalizada => EnEmision &&
+    (EstaCompleta || (FechaFinEmision is not null && DateTime.Today > FechaFinEmision.Value.Date));
 }
