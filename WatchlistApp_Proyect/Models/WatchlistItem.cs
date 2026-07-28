@@ -55,4 +55,11 @@ public class WatchlistItem
 
   [JsonIgnore]
   public int UnidadesVistas => Tipo == TipoContenido.Pelicula ? (Visto ? 1 : 0) : EpisodiosVistos.Count;
+
+  // Esta "actualmente" en emision: marcada como en emision, no completada,
+  // y (si hay fechas) hoy cae dentro del rango [FechaInicio, FechaFin].
+  [JsonIgnore]
+  public bool EnEmisionActiva => EnEmision && !EstaCompleta && 
+  (FechaInicioEmision is null || DateTime.Today >= FechaInicioEmision.Value.Date) &&
+  (FechaFinEmision is null || DateTime.Today <= FechaFinEmision.Value.Date);
 }
