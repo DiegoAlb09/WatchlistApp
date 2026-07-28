@@ -13,6 +13,7 @@ public class WatchlistItemEntity
   public string Titulo { get; set; } = string.Empty;
   public string PortadaUrl { get; set; } = string.Empty;
   public TipoContenido Tipo { get; set; } = TipoContenido.Pelicula;
+  
   public int? EpisodioInicio { get; set; }
   public int? EpisodioFin { get; set; }
 
@@ -23,5 +24,8 @@ public class WatchlistItemEntity
   // Solo aplica si Tipo == Serie: para el calendario de estrenos
   public bool EnEmision { get; set; }
   public DayOfWeek? DiaEmision { get; set; }
+  public DateTime? FechaInicioEmision { get; set; }
+  public DateTime? FechaFinEmision { get; set; }
+
   public DateTime FechaAgregado { get; set; } = DateTime.UtcNow;
 }
