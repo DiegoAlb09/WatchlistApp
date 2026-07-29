@@ -66,6 +66,19 @@
           <option value="@((int)dia)" selected="@(item.DiaEmision == dia)">@nombre</option>
         }
       </select>
+      <label>Desde (día / mes / año)</label>
+      <div class="rango-episodios">
+        <InputNumber @bind-Value="diaInicio" placeholder="Día" />
+        <InputNumber @bind-Value="mesInicio" placeholder="Mes" />
+        <InputNumber @bind-Value="anioInicio" placeholder="Año" />
+      </div>
+
+      <label>Hasta (día / mes / año) - déjalo vacío si aún no termina</label>
+      <div class="rango-episodios">
+        <InputNumber @bind-Value="diaFin" placeholder="Día" />
+        <InputNumber @bind-Value="mesFin" placeholder="Mes" />
+        <InputNumber @bind-Value="anioFin" placeholder="Año" />
+      </div>
     }
   }
 
