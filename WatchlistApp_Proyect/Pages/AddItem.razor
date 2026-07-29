@@ -81,6 +81,10 @@
   private WatchlistItem item = new();
   private bool EsEdicion => Id is not null;
 
+  private int? diaInicio, mesInicio, anioInicio;
+  private int? diaFin, mesFin, anioFin;
+  private string? errorFechas;
+
   protected override async Task OnInitializedAsync()
   {
     if (EsEdicion)
