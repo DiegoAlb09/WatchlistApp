@@ -114,7 +114,7 @@
     {
       item.DiaEmision = (DayOfWeek)valor;
     }
-    else 
+    else
     {
       item.DiaEmision = null;
     }
@@ -124,7 +124,7 @@
   {
     if (dia is null || mes is null || anio is null)
       return null;
-    
+
     try
     {
       return new DateTime(anio.Value, mes.Value, dia.Value);
@@ -137,6 +137,8 @@
 
   private async Task Guardar()
   {
+    errorFechas = null;
+
     if (string.IsNullOrWhiteSpace(item.Titulo))
       return;
 
@@ -146,20 +148,56 @@
       item.EpisodioFin = null;
       item.EnEmision = false;
       item.DiaEmision = null;
+      item.FechaInicioEmision = null;
+      item.FechaFinEmision = null;
     }
     else
     {
-      // Si el rango es invalido, no permite guardar
       if (item.EpisodioInicio is null || item.EpisodioFin is null || item.EpisodioFin < item.EpisodioInicio)
         return;
 
-      // Limpia episodios marcados que quedaron fuera del nuevo rango (ej. al editar)
       item.EpisodiosVistos = item.EpisodiosVistos
           .Where(e => e >= item.EpisodioInicio && e <= item.EpisodioFin)
           .ToList();
-      
+
       if (!item.EnEmision)
+      {
         item.DiaEmision = null;
+        item.FechaInicioEmision = null;
+        item.FechaFinEmision = null;
+      }
+      else
+      {
+        // Si escribio algo en Desde/Hasta pero quedo incompleto (ej. dia sin mes),
+        // ConstruirFecha regresa null y ese extremo queda "sin limite" a proposito.
+        var soloAlgunosCamposInicio = (diaInicio is not null || mesInicio is not null || anioInicio is not null)
+            && (diaInicio is null || mesInicio is null || anioInicio is null);
+        var soloAlgunosCamposFin = (diaFin is not null || mesFin is not null || anioFin is not null)
+            && (diaFin is null || mesFin is null || anioFin is null);
+
+        if (soloAlgunosCamposInicio || soloAlgunosCamposFin)
+        {
+          errorFechas = "Completa día, mes y año, o deja los tres vacíos.";
+          return;
+        }
+
+        item.FechaInicioEmision = ConstruirFecha(diaInicio, mesInicio, anioInicio);
+        item.FechaFinEmision = ConstruirFecha(diaFin, mesFin, anioFin);
+
+        if ((diaInicio is not null && item.FechaInicioEmision is null) ||
+            (diaFin is not null && item.FechaFinEmision is null))
+        {
+          errorFechas = "Alguna de las fechas no es válida (revisa el día para ese mes).";
+          return;
+        }
+
+        if (item.FechaInicioEmision is not null && item.FechaFinEmision is not null
+            && item.FechaFinEmision < item.FechaInicioEmision)
+        {
+          errorFechas = "La fecha \"Hasta\" debe ser posterior a la fecha \"Desde\".";
+          return;
+        }
+      }
     }
 
     if (EsEdicion)
