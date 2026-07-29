@@ -119,6 +119,22 @@
       item.DiaEmision = null;
     }
   }
+
+  private static DateTime? ConstruirFecha(int? dia, int? mes, int? anio)
+  {
+    if (dia is null || mes is null || anio is null)
+      return null;
+    
+    try
+    {
+      return new DateTime(anio.Value, mes.Value, dia.Value);
+    }
+    catch (ArgumentOutOfRangeException)
+    {
+      return null;
+    }
+  }
+
   private async Task Guardar()
   {
     if (string.IsNullOrWhiteSpace(item.Titulo))
