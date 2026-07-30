@@ -29,6 +29,11 @@ public class WatchlistItem
   public bool EnEmision { get; set; } = false;
   public DayOfWeek? DiaEmision { get; set; }
 
+  // Rango de fechas durante el cual la serie esta en emision.
+  // Null = sin limite en ese extremo (compatibilidad con datos viejos que no tenian fechas, o para series sin fecha de fin todavia definida).
+  public DateTime? FechaInicioEmision { get; set; }
+  public DateTime? FechaFinEmision { get; set; }
+
   public DateTime FechaAgregado { get; set; } = DateTime.Now;
 
   // --- Propiedades calculadas: no se guardan en localStorage/backend ---
@@ -50,4 +55,17 @@ public class WatchlistItem
 
   [JsonIgnore]
   public int UnidadesVistas => Tipo == TipoContenido.Pelicula ? (Visto ? 1 : 0) : EpisodiosVistos.Count;
+
+  // Esta "actualmente" en emision: marcada como en emision, no completada,
+  // y (si hay fechas) hoy cae dentro del rango [FechaInicio, FechaFin].
+  [JsonIgnore]
+  public bool EnEmisionActiva => EnEmision && !EstaCompleta && 
+    (FechaInicioEmision is null || DateTime.Today >= FechaInicioEmision.Value.Date) &&
+    (FechaFinEmision is null || DateTime.Today <= FechaFinEmision.Value.Date);
+
+  // Se muestra el tag "Finalizado" si ya paso la fecha final o si ya se
+  // vieron todos los capitulos, aunque siga marcada como "En emision".
+  [JsonIgnore]
+  public bool EmisionFinalizada => EnEmision &&
+    (EstaCompleta || (FechaFinEmision is not null && DateTime.Today > FechaFinEmision.Value.Date));
 }

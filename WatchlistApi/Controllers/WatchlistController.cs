@@ -59,6 +59,8 @@ public class WatchlistController : ControllerBase
     existente.EpisodiosVistos = item.EpisodiosVistos;
     existente.EnEmision = item.EnEmision;
     existente.DiaEmision = item.DiaEmision;
+    existente.FechaInicioEmision = item.FechaInicioEmision;
+    existente.FechaFinEmision = item.FechaFinEmision;
 
     await _db.SaveChangesAsync();
     return Ok(existente);
