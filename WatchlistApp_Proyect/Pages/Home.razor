@@ -1,7 +1,5 @@
 ﻿@page "/"
-
 @attribute [Authorize]
-
 @using System.Text.Json
 @inject LocalStorageService Storage
 @inject HistorialService Historial
@@ -232,7 +230,7 @@ else
           <div class="calendario-lista">
             @foreach (var (dia, nombre) in DiasEmision.Todos)
             {
-              var seriesDelDia = TodasLasSeriesEnEmision.Where(s => s.DiaEmision == dia).ToList();
+              var seriesDelDia = TodasLasSeriesEnEmision.Where(s => s.EnEmisionActiva && s.DiaEmision == dia).ToList();
               var esHoy = dia == DateTime.Now.DayOfWeek;
               <div class="calendario-dia @(esHoy ? "calendario-hoy" : "")">
                 <span class="calendario-dia-nombre">@nombre @(esHoy ? "· Hoy" : "")</span>
@@ -271,7 +269,7 @@ else
           <div class="mes-grid">
             @foreach (var dia in DiasDelGrid())
             {
-              var seriesDelDia = TodasLasSeriesEnEmision.Where(s => s.DiaEmision == dia.DayOfWeek).ToList();
+              var seriesDelDia = TodasLasSeriesEnEmision.Where(s => EmiteEnFecha(s, dia)).ToList();
               var esHoy = dia.Date == DateTime.Now.Date;
               var esMesActual = dia.Month == mesMostrado.Month;
               <div class="mes-celda @(esHoy ? "mes-hoy" : "") @(!esMesActual ? "mes-fuera" : "")">
@@ -325,8 +323,18 @@ else
 
   private string NombreMesMostrado => $"{NombresMeses[mesMostrado.Month - 1]} {mesMostrado.Year}";
 
+  // Todas las series marcadas "En emision" con un dia asignado, SIN filtrar
+  // por fecha activa todavia (eso se aplica distinto en semana vs mes).
   private IEnumerable<WatchlistItem> TodasLasSeriesEnEmision =>
     (items ?? new()).Where(i => i.Tipo == TipoContenido.Serie && i.EnEmision && i.DiaEmision is not null);
+
+  // Coincide el dia de la semana de una serie con una fecha concreta del
+  // grid mensual, y esa fecha cae dentro de su rango [FechaInicio, FechaFin]
+  // (null en cualquier extremo = sin limite en ese lado).
+  private static bool EmiteEnFecha(WatchlistItem s, DateTime fecha) =>
+      s.DiaEmision == fecha.DayOfWeek &&
+      (s.FechaInicioEmision is null || fecha.Date >= s.FechaInicioEmision.Value.Date) &&
+      (s.FechaFinEmision is null || fecha.Date <= s.FechaFinEmision.Value.Date);
 
   private class PreferenciasUI
   {
@@ -519,13 +527,9 @@ else
 
   private void MesSiguiente() => mesMostrado = mesMostrado.AddMonths(1);
 
-  // Genera 42 dias (6 semanas x 7 dias, Lunes a Domingo) empezando en el
-  // lunes de la semana que contiene el dia 1 del mes mostrado - suficiente
-  // para cubrir cualquier mes, incluyendo dias "de relleno" del mes
-  // anterior/siguiente para completar semanas.
   private List<DateTime> DiasDelGrid()
   {
-    var offsetLunes = ((int)mesMostrado.DayOfWeek + 6) % 7; // Domingo=0 -> 6, Lunes=1 -> 0, etc.
+    var offsetLunes = ((int)mesMostrado.DayOfWeek + 6) % 7;
     var inicioGrid = mesMostrado.AddDays(-offsetLunes);
 
     var dias = new List<DateTime>();
