@@ -109,6 +109,9 @@
   margin-left: 6px;
   vertical-align: middle;
 }
+.tag-finalizado {
+  background: var(--muted);
+}
 
 /* ===== Checklist "Vista" (peliculas) y episodios (series) ===== */
 .visto-check {
