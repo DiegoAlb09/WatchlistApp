@@ -213,7 +213,7 @@ else
         <button class="modal-close-x" @onclick="() => mostrarCalendario = false">✕</button>
       </div>
 
-      @if (!SeriesEnEmision.Any())
+      @if (!TodasLasSeriesEnEmision.Any())
       {
         <p class="empty-msg">
           No tienes series marcadas como "En emisión" todavía.
@@ -232,7 +232,7 @@ else
           <div class="calendario-lista">
             @foreach (var (dia, nombre) in DiasEmision.Todos)
             {
-              var seriesDelDia = SeriesEnEmision.Where(s => s.DiaEmision == dia).ToList();
+              var seriesDelDia = TodasLasSeriesEnEmision.Where(s => s.DiaEmision == dia).ToList();
               var esHoy = dia == DateTime.Now.DayOfWeek;
               <div class="calendario-dia @(esHoy ? "calendario-hoy" : "")">
                 <span class="calendario-dia-nombre">@nombre @(esHoy ? "· Hoy" : "")</span>
@@ -271,7 +271,7 @@ else
           <div class="mes-grid">
             @foreach (var dia in DiasDelGrid())
             {
-              var seriesDelDia = SeriesEnEmision.Where(s => s.DiaEmision == dia.DayOfWeek).ToList();
+              var seriesDelDia = TodasLasSeriesEnEmision.Where(s => s.DiaEmision == dia.DayOfWeek).ToList();
               var esHoy = dia.Date == DateTime.Now.Date;
               var esMesActual = dia.Month == mesMostrado.Month;
               <div class="mes-celda @(esHoy ? "mes-hoy" : "") @(!esMesActual ? "mes-fuera" : "")">
@@ -325,8 +325,8 @@ else
 
   private string NombreMesMostrado => $"{NombresMeses[mesMostrado.Month - 1]} {mesMostrado.Year}";
 
-  private IEnumerable<WatchlistItem> SeriesEnEmision =>
-      (items ?? new()).Where(i => i.Tipo == TipoContenido.Serie && i.EnEmision && i.DiaEmision is not null);
+  private IEnumerable<WatchlistItem> TodasLasSeriesEnEmision =>
+    (items ?? new()).Where(i => i.Tipo == TipoContenido.Serie && i.EnEmision && i.DiaEmision is not null);
 
   private class PreferenciasUI
   {
