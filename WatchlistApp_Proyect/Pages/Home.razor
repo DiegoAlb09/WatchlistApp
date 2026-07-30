@@ -92,7 +92,14 @@ else
                 @(item.Tipo == TipoContenido.Serie ? "Serie" : "Película")
                 @if (item.Tipo == TipoContenido.Serie && item.EnEmision)
                 {
-                  <span class="tag-emision">EN EMISIÓN</span>
+                  @if (item.EmisionFinalizada)
+                  {
+                    <span class="tag-emision tag-finalizado">FINALIZADO</span>
+                  }
+                  else
+                  {
+                    <span class="tag-emision">EN EMISIÓN</span>
+                  }
                 }
               </p>
 
