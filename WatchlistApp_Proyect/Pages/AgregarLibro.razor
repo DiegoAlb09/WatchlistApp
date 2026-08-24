@@ -2,93 +2,116 @@
 @page "/libros/agregar/{Id:guid}"
 @attribute [Authorize]
 @inject LibraryStorageService Storage
+@inject ToastService Toasts
 @inject NavigationManager Nav
 
 <div class="libros-theme">
-    <div class="header">
-        <h1><Icon Name="@(EsEdicion ? "pencil" : "book")" /> @(EsEdicion ? "Editar" : "Agregar") a Libros/Manga/Cómics</h1>
+  <div class="header">
+    <h1>
+      <Icon Name="@(EsEdicion ? "pencil" : "book")" /> @(EsEdicion ? "Editar" : "Agregar") a Libros/Manga/Cómics
+    </h1>
+  </div>
+
+  <EditForm Model="item" OnValidSubmit="Guardar" class="form-agregar">
+    <DataAnnotationsValidator />
+
+    <label>Título</label>
+    <InputText @bind-Value="item.Titulo" type="text" placeholder="Ej. One Piece (manga)" />
+
+    <label>Portada (URL de la imagen)</label>
+    <InputText @bind-Value="item.PortadaUrl" type="url" placeholder="https://..." />
+
+    @if (!string.IsNullOrWhiteSpace(item.PortadaUrl))
+    {
+      <div class="preview" style="background-image:url('@item.PortadaUrl')"></div>
+    }
+
+    <label>Tipo</label>
+    <div class="tipo-selector">
+      <label>
+        <input type="radio" name="tipoLibro" checked="@(item.Tipo == TipoLibro.Libro)"
+              @onchange="() => item.Tipo = TipoLibro.Libro" />
+        Libro
+      </label>
+      <label>
+        <input type="radio" name="tipoLibro" checked="@(item.Tipo == TipoLibro.Manga)"
+              @onchange="() => item.Tipo = TipoLibro.Manga" />
+        Manga
+      </label>
+      <label>
+        <input type="radio" name="tipoLibro" checked="@(item.Tipo == TipoLibro.Comic)"
+              @onchange="() => item.Tipo = TipoLibro.Comic" />
+        Cómic
+      </label>
     </div>
 
-    <EditForm Model="item" OnValidSubmit="Guardar" class="form-agregar">
-        <DataAnnotationsValidator />
+    <label>Capítulo/tomo inicial</label>
+    <InputNumber @bind-Value="item.CapituloInicio" />
 
-        <label>Título</label>
-        <InputText @bind-Value="item.Titulo" type="text" placeholder="Ej. One Piece (manga)" />
+    <label>Capítulo/tomo meta (opcional — déjalo vacío si aún no lo sabes)</label>
+    <InputNumber @bind-Value="item.CapituloFin" placeholder="Ej. 108" />
 
-        <label>Portada (URL de la imagen)</label>
-        <InputText @bind-Value="item.PortadaUrl" type="url" placeholder="https://..." />
+    <label>Capítulo/tomo actual (en el que vas)</label>
+    <InputNumber @bind-Value="item.CapituloActual" />
 
-        @if (!string.IsNullOrWhiteSpace(item.PortadaUrl))
-        {
-            <div class="preview" style="background-image:url('@item.PortadaUrl')"></div>
-        }
-
-        <label>Tipo</label>
-        <div class="tipo-selector">
-            <label>
-                <input type="radio" name="tipoLibro" checked="@(item.Tipo == TipoLibro.Libro)"
-                    @onchange="() => item.Tipo = TipoLibro.Libro" />
-                Libro
-            </label>
-            <label>
-                <input type="radio" name="tipoLibro" checked="@(item.Tipo == TipoLibro.Manga)"
-                    @onchange="() => item.Tipo = TipoLibro.Manga" />
-                Manga
-            </label>
-            <label>
-                <input type="radio" name="tipoLibro" checked="@(item.Tipo == TipoLibro.Comic)"
-                    @onchange="() => item.Tipo = TipoLibro.Comic" />
-                Cómic
-            </label>
-        </div>
-
-        <label>Capítulo/tomo inicial</label>
-        <InputNumber @bind-Value="item.CapituloInicio" />
-
-        <label>Capítulo/tomo meta (opcional — déjalo vacío si aún no lo sabes)</label>
-        <InputNumber @bind-Value="item.CapituloFin" placeholder="Ej. 108" />
-
-        <label>Capítulo/tomo actual (en el que vas)</label>
-        <InputNumber @bind-Value="item.CapituloActual" />
-
-        <div class="form-buttons">
-            <button type="submit" class="btn-add">@(EsEdicion ? "Guardar cambios" : "Guardar")</button>
-            <button type="button" class="btn-cancel" @onclick="Cancelar">Cancelar</button>
-        </div>
+    <div class="form-buttons">
+      <button type="submit" class="btn-add" disabled="@guardando">@(guardando ? "Guardando..." : (EsEdicion ?
+                             "Guardar cambios" : "Guardar"))</button>
+        <button type="button" class="btn-cancel" @onclick="Cancelar">Cancelar</button>
+      </div>
     </EditForm>
-</div>
+  </div>
 
 @code {
-    [Parameter] public Guid? Id { get; set; }
+  [Parameter] public Guid? Id { get; set; }
 
-    private LibroItem item = new();
-    private bool EsEdicion => Id is not null;
+  private LibroItem item = new();
+  private bool EsEdicion => Id is not null;
+  private bool guardando;
 
-    protected override async Task OnInitializedAsync()
+  protected override async Task OnInitializedAsync()
+  {
+    if (EsEdicion)
     {
-        if (EsEdicion)
-        {
-            var existente = (await Storage.GetAllAsync()).FirstOrDefault(i => i.Id == Id);
-            if (existente is not null)
-                item = existente;
-        }
+      var existente = (await Storage.GetAllAsync()).FirstOrDefault(i => i.Id == Id);
+      if (existente is not null)
+        item = existente;
     }
+  }
 
-    private async Task Guardar()
+  private async Task Guardar()
+  {
+    if (string.IsNullOrWhiteSpace(item.Titulo))
+      return;
+
+    if (item.CapituloActual < item.CapituloInicio)
+      item.CapituloActual = item.CapituloInicio;
+
+    guardando = true;
+    try
     {
-        if (string.IsNullOrWhiteSpace(item.Titulo))
-            return;
+      if (EsEdicion)
+      {
+        await Storage.UpdateAsync(item);
+        Toasts.Exito($"\"{item.Titulo}\" actualizado.");
+      }
+      else
+      {
+        await Storage.AddAsync(item);
+        Toasts.Exito($"\"{item.Titulo}\" agregado a tu lista.");
+      }
 
-        if (item.CapituloActual < item.CapituloInicio)
-            item.CapituloActual = item.CapituloInicio;
-
-        if (EsEdicion)
-            await Storage.UpdateAsync(item);
-        else
-            await Storage.AddAsync(item);
-
-        Nav.NavigateTo("/libros");
+      Nav.NavigateTo("/libros");
     }
+    catch (Exception)
+    {
+      Toasts.Error("No se pudo guardar. Revisa tu conexión con el servidor.");
+    }
+    finally
+    {
+      guardando = false;
+    }
+  }
 
-    private void Cancelar() => Nav.NavigateTo("/libros");
+  private void Cancelar() => Nav.NavigateTo("/libros");
 }

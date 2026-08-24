@@ -20,9 +20,9 @@ public class ToastService
   public void Error(string texto) => Mostrar(texto, TipoToast.Error);
   public void Info(string texto) => Mostrar(texto, TipoToast.Info);
 
-  public void Mostrar(string texto, TipoToast tipo)
+  private void Mostrar(string texto, TipoToast tipo)
   {
-    var toast = new ToastMensaje { Texto = texto, Tipo = tipo };  
+    var toast = new ToastMensaje { Texto = texto, Tipo = tipo };
     Mensajes.Add(toast);
     OnChange?.Invoke();
 

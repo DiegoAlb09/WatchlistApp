@@ -3,8 +3,9 @@
 @using System.Text.Json
 @inject LocalStorageService Storage
 @inject HistorialService Historial
-@inject NavigationManager Nav
+@inject ToastService Toasts
 @inject ConfirmService Confirm
+@inject NavigationManager Nav
 @inject IJSRuntime JS
 
 <div class="header">
@@ -313,25 +314,18 @@ else
   private string busqueda = "";
   private string orden = "reciente";
 
-  // ===== Boton "Sorprendeme" =====
   private WatchlistItem? sorpresa;
   private Guid? ultimoElegidoId;
 
-  // ===== Modal calendario =====
   private bool mostrarCalendario = false;
   private bool vistaMensual = false;
   private DateTime mesMostrado = new(DateTime.Now.Year, DateTime.Now.Month, 1);
 
   private string NombreMesMostrado => $"{NombresMeses[mesMostrado.Month - 1]} {mesMostrado.Year}";
 
-  // Todas las series marcadas "En emision" con un dia asignado, SIN filtrar
-  // por fecha activa todavia (eso se aplica distinto en semana vs mes).
   private IEnumerable<WatchlistItem> TodasLasSeriesEnEmision =>
-    (items ?? new()).Where(i => i.Tipo == TipoContenido.Serie && i.EnEmision && i.DiaEmision is not null);
+      (items ?? new()).Where(i => i.Tipo == TipoContenido.Serie && i.EnEmision && i.DiaEmision is not null);
 
-  // Coincide el dia de la semana de una serie con una fecha concreta del
-  // grid mensual, y esa fecha cae dentro de su rango [FechaInicio, FechaFin]
-  // (null en cualquier extremo = sin limite en ese lado).
   private static bool EmiteEnFecha(WatchlistItem s, DateTime fecha) =>
       s.DiaEmision == fecha.DayOfWeek &&
       (s.FechaInicioEmision is null || fecha.Date >= s.FechaInicioEmision.Value.Date) &&
@@ -463,51 +457,67 @@ else
 
   private async Task MarcarVisto(WatchlistItem item, bool valor)
   {
-    item.Visto = valor;
-    await Storage.UpdateAsync(item);
+    try
+    {
+      item.Visto = valor;
+      await Storage.UpdateAsync(item);
 
-    if (valor)
-      await Historial.RegistrarAsync(item.Id, item.Titulo);
+      if (valor)
+        await Historial.RegistrarAsync(item.Id, item.Titulo);
+    }
+    catch (Exception)
+    {
+      item.Visto = !valor; // revierte el cambio visual, ya que no se pudo guardar
+      Toasts.Error($"No se pudo actualizar \"{item.Titulo}\". Intenta de nuevo.");
+    }
   }
 
   private async Task MarcarEpisodio(WatchlistItem item, int episodio, bool marcado)
   {
-    if (marcado)
+    try
     {
-      if (!item.EpisodiosVistos.Contains(episodio))
-        item.EpisodiosVistos.Add(episodio);
-    }
-    else
-    {
-      item.EpisodiosVistos.Remove(episodio);
-    }
-    await Storage.UpdateAsync(item);
+      if (marcado)
+      {
+        if (!item.EpisodiosVistos.Contains(episodio))
+          item.EpisodiosVistos.Add(episodio);
+      }
+      else
+      {
+        item.EpisodiosVistos.Remove(episodio);
+      }
+      await Storage.UpdateAsync(item);
 
-    if (marcado)
-      await Historial.RegistrarAsync(item.Id, item.Titulo);
+      if (marcado)
+        await Historial.RegistrarAsync(item.Id, item.Titulo);
+    }
+    catch (Exception)
+    {
+      // revierte el cambio visual, ya que no se pudo guardar
+      if (marcado) item.EpisodiosVistos.Remove(episodio);
+      else if (!item.EpisodiosVistos.Contains(episodio)) item.EpisodiosVistos.Add(episodio);
+
+      Toasts.Error($"No se pudo actualizar el episodio {episodio} de \"{item.Titulo}\".");
+    }
   }
-
-  @* private async Task Eliminar(Guid id, string titulo)
-  {
-    var confirmado = await JS.InvokeAsync<bool>("confirm", $"¿Eliminar \"{titulo}\" de tu watchlist?");
-    if (!confirmado)
-      return;
-
-    await Storage.DeleteAsync(id);
-    items = await Storage.GetAllAsync();
-  } *@
 
   private async Task Eliminar(Guid id, string titulo)
   {
     var confirmado = await Confirm.PreguntarAsync($"¿Eliminar \"{titulo}\" de tu watchlist?");
     if (!confirmado)
       return;
-    
-    await Storage.DeleteAsync(id);
-    items = await Storage.GetAllAsync();
+
+    try
+    {
+      await Storage.DeleteAsync(id);
+      items = await Storage.GetAllAsync();
+      Toasts.Exito($"\"{titulo}\" eliminado.");
+    }
+    catch (Exception)
+    {
+      Toasts.Error($"No se pudo eliminar \"{titulo}\". Intenta de nuevo.");
+    }
   }
 
-  // ===== Boton "Sorprendeme" =====
   private async Task ElegirAlAzar()
   {
     var candidatos = (items ?? new()).Where(i => !i.EstaCompleta).ToList();
@@ -515,7 +525,7 @@ else
     if (candidatos.Count == 0)
     {
       sorpresa = null;
-      await JS.InvokeVoidAsync("alert", "No tienes series o películas pendientes por ver.");
+      Toasts.Info("No tienes series o películas pendientes por ver.");
       return;
     }
 
@@ -533,7 +543,6 @@ else
 
   private void CerrarModal() => sorpresa = null;
 
-  // ===== Calendario: vista mensual =====
   private void MesAnterior() => mesMostrado = mesMostrado.AddMonths(-1);
 
   private void MesSiguiente() => mesMostrado = mesMostrado.AddMonths(1);

@@ -3,8 +3,9 @@
 @using System.Text.Json
 @inject LibraryStorageService Storage
 @inject HistorialService Historial
-@inject NavigationManager Nav
+@inject ToastService Toasts
 @inject ConfirmService Confirm
+@inject NavigationManager Nav
 @inject IJSRuntime JS
 
 <div class="libros-theme">
@@ -212,29 +213,46 @@
     if (libro.CapituloFin is not null && nuevo > libro.CapituloFin) nuevo = libro.CapituloFin.Value;
 
     libro.CapituloActual = nuevo;
-    await Storage.UpdateAsync(libro);
 
-    // Solo se registra en el historial cuando el capitulo REALMENTE avanza
-    // (nunca al retroceder con el boton "-", ni cuando ya estaba en el limite).
+    try
+    {
+      await Storage.UpdateAsync(libro);
+    }
+    catch (Exception)
+    {
+      libro.CapituloActual = anterior; // revierte el cambio visual, ya que no se pudo guardar
+      Toasts.Error($"No se pudo actualizar \"{libro.Titulo}\". Intenta de nuevo.");
+      return;
+    }
+
     if (nuevo > anterior)
-      await Historial.RegistrarAsync(libro.Id, libro.Titulo);
+    {
+      try
+      {
+        await Historial.RegistrarAsync(libro.Id, libro.Titulo);
+      }
+      catch (Exception)
+      {
+        // El capitulo ya se guardo bien; si solo falla el registro de
+        // historial (secundario), no vale la pena revertir ni avisar.
+      }
+    }
   }
-
-  @* private async Task Eliminar(Guid id, string titulo)
-  {
-    var confirmado = await JS.InvokeAsync<bool>("confirm", $"¿Eliminar \"{titulo}\" de tu lista?");
-    if (!confirmado) return;
-
-    await Storage.DeleteAsync(id);
-    items = await Storage.GetAllAsync();
-  } *@
 
   private async Task Eliminar(Guid id, string titulo)
   {
     var confirmado = await Confirm.PreguntarAsync($"¿Eliminar \"{titulo}\" de tu lista?");
     if (!confirmado) return;
 
-    await Storage.DeleteAsync(id);
-    items = await Storage.GetAllAsync();
+    try
+    {
+      await Storage.DeleteAsync(id);
+      items = await Storage.GetAllAsync();
+      Toasts.Exito($"\"{titulo}\" eliminado.");
+    }
+    catch (Exception)
+    {
+      Toasts.Error($"No se pudo eliminar \"{titulo}\". Intenta de nuevo.");
+    }
   }
 }

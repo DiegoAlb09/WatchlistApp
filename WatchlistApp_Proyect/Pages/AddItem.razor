@@ -2,6 +2,7 @@
 @page "/agregar/{Id:guid}"
 @attribute [Authorize]
 @inject LocalStorageService Storage
+@inject ToastService Toasts
 @inject NavigationManager Nav
 
 <div class="header">
@@ -58,7 +59,7 @@
 
     @if (item.EnEmision)
     {
-      <label>Día de emisión</label>
+      <label>Día de emisión (semanal)</label>
       <select class="sort-select" @onchange="OnDiaEmisionChanged">
         <option value="-1" selected="@(item.DiaEmision is null)">Selecciona un día</option>
         @foreach (var (dia, nombre) in DiasEmision.Todos)
@@ -66,6 +67,7 @@
           <option value="@((int)dia)" selected="@(item.DiaEmision == dia)">@nombre</option>
         }
       </select>
+
       <label>Desde (día / mes / año)</label>
       <div class="rango-episodios">
         <InputNumber @bind-Value="diaInicio" placeholder="Día" />
@@ -73,17 +75,22 @@
         <InputNumber @bind-Value="anioInicio" placeholder="Año" />
       </div>
 
-      <label>Hasta (día / mes / año) - déjalo vacío si aún no termina</label>
+      <label>Hasta (día / mes / año) — déjalo vacío si aún no termina</label>
       <div class="rango-episodios">
         <InputNumber @bind-Value="diaFin" placeholder="Día" />
         <InputNumber @bind-Value="mesFin" placeholder="Mes" />
         <InputNumber @bind-Value="anioFin" placeholder="Año" />
       </div>
+
+      @if (!string.IsNullOrWhiteSpace(errorFechas))
+      {
+        <p class="rango-error">@errorFechas</p>
+      }
     }
   }
 
   <div class="form-buttons">
-    <button type="submit" class="btn-add">@(EsEdicion ? "Guardar cambios" : "Guardar")</button>
+    <button type="submit" class="btn-add" disabled="@guardando">@(guardando ? "Guardando..." : (EsEdicion ? "Guardar cambios" : "Guardar"))</button>
     <button type="button" class="btn-cancel" @onclick="Cancelar">Cancelar</button>
   </div>
 </EditForm>
@@ -93,10 +100,11 @@
 
   private WatchlistItem item = new();
   private bool EsEdicion => Id is not null;
+  private string? errorFechas;
+  private bool guardando;
 
   private int? diaInicio, mesInicio, anioInicio;
   private int? diaFin, mesFin, anioFin;
-  private string? errorFechas;
 
   protected override async Task OnInitializedAsync()
   {
@@ -104,20 +112,32 @@
     {
       var existente = (await Storage.GetAllAsync()).FirstOrDefault(i => i.Id == Id);
       if (existente is not null)
+      {
         item = existente;
+
+        if (item.FechaInicioEmision is not null)
+        {
+          diaInicio = item.FechaInicioEmision.Value.Day;
+          mesInicio = item.FechaInicioEmision.Value.Month;
+          anioInicio = item.FechaInicioEmision.Value.Year;
+        }
+
+        if (item.FechaFinEmision is not null)
+        {
+          diaFin = item.FechaFinEmision.Value.Day;
+          mesFin = item.FechaFinEmision.Value.Month;
+          anioFin = item.FechaFinEmision.Value.Year;
+        }
+      }
     }
   }
 
   private void OnDiaEmisionChanged(ChangeEventArgs e)
   {
     if (int.TryParse(e.Value?.ToString(), out var valor) && valor >= 0)
-    {
       item.DiaEmision = (DayOfWeek)valor;
-    }
     else
-    {
       item.DiaEmision = null;
-    }
   }
 
   private static DateTime? ConstruirFecha(int? dia, int? mes, int? anio)
@@ -168,8 +188,6 @@
       }
       else
       {
-        // Si escribio algo en Desde/Hasta pero quedo incompleto (ej. dia sin mes),
-        // ConstruirFecha regresa null y ese extremo queda "sin limite" a proposito.
         var soloAlgunosCamposInicio = (diaInicio is not null || mesInicio is not null || anioInicio is not null)
             && (diaInicio is null || mesInicio is null || anioInicio is null);
         var soloAlgunosCamposFin = (diaFin is not null || mesFin is not null || anioFin is not null)
@@ -200,12 +218,30 @@
       }
     }
 
-    if (EsEdicion)
-      await Storage.UpdateAsync(item);
-    else
-      await Storage.AddAsync(item);
+    guardando = true;
+    try
+    {
+      if (EsEdicion)
+      {
+        await Storage.UpdateAsync(item);
+        Toasts.Exito($"\"{item.Titulo}\" actualizado.");
+      }
+      else
+      {
+        await Storage.AddAsync(item);
+        Toasts.Exito($"\"{item.Titulo}\" agregado a tu watchlist.");
+      }
 
-    Nav.NavigateTo("/");
+      Nav.NavigateTo("/");
+    }
+    catch (Exception)
+    {
+      Toasts.Error("No se pudo guardar. Revisa tu conexión con el servidor.");
+    }
+    finally
+    {
+      guardando = false;
+    }
   }
 
   private void Cancelar() => Nav.NavigateTo("/");

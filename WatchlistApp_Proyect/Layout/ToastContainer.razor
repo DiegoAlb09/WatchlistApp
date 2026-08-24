@@ -5,7 +5,7 @@
   @foreach (var toast in Toasts.Mensajes.ToList())
   {
     <div class="toast toast-@ClaseTipo(toast.Tipo)" @key="toast.Id">
-      <Icon Name="@IconTipo(toast.Tipo)" />
+      <Icon Name="@IconoTipo(toast.Tipo)" />
       <span>@toast.Texto</span>
       <button class="toast-cerrar" @onclick="() => Toasts.Cerrar(toast.Id)">✕</button>
     </div>
@@ -27,7 +27,7 @@
     _ => "info"
   };
 
-  public static string IconTipo(TipoToast tipo) => tipo switch
+  private static string IconoTipo(TipoToast tipo) => tipo switch
   {
     TipoToast.Exito => "check",
     TipoToast.Error => "alerta",
