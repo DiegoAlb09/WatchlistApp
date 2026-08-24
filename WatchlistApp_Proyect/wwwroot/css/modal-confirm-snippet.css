@@ -1,0 +1,26 @@
+.modal-icono {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+.modal-icono .icon {
+  width: 40px;
+  height: 40px;
+  color: var(--accent);
+}
+.modal-mensaje {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 4px 0 0;
+}
+.btn-delete-confirm {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  flex: 1;
+}
+.btn-delete-confirm:hover { opacity: 0.9; }
