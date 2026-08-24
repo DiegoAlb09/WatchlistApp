@@ -4,6 +4,7 @@
 @inject LibraryStorageService Storage
 @inject HistorialService Historial
 @inject NavigationManager Nav
+@inject ConfirmService Confirm
 @inject IJSRuntime JS
 
 <div class="libros-theme">
@@ -219,9 +220,18 @@
       await Historial.RegistrarAsync(libro.Id, libro.Titulo);
   }
 
-  private async Task Eliminar(Guid id, string titulo)
+  @* private async Task Eliminar(Guid id, string titulo)
   {
     var confirmado = await JS.InvokeAsync<bool>("confirm", $"¿Eliminar \"{titulo}\" de tu lista?");
+    if (!confirmado) return;
+
+    await Storage.DeleteAsync(id);
+    items = await Storage.GetAllAsync();
+  } *@
+
+  private async Task Eliminar(Guid id, string titulo)
+  {
+    var confirmado = await Confirm.PreguntarAsync($"¿Eliminar \"{titulo}\" de tu lista?");
     if (!confirmado) return;
 
     await Storage.DeleteAsync(id);

@@ -4,6 +4,7 @@
 @inject LocalStorageService Storage
 @inject HistorialService Historial
 @inject NavigationManager Nav
+@inject ConfirmService Confirm
 @inject IJSRuntime JS
 
 <div class="header">
@@ -486,12 +487,22 @@ else
       await Historial.RegistrarAsync(item.Id, item.Titulo);
   }
 
-  private async Task Eliminar(Guid id, string titulo)
+  @* private async Task Eliminar(Guid id, string titulo)
   {
     var confirmado = await JS.InvokeAsync<bool>("confirm", $"¿Eliminar \"{titulo}\" de tu watchlist?");
     if (!confirmado)
       return;
 
+    await Storage.DeleteAsync(id);
+    items = await Storage.GetAllAsync();
+  } *@
+
+  private async Task Eliminar(Guid id, string titulo)
+  {
+    var confirmado = await Confirm.PreguntarAsync($"¿Eliminar \"{titulo}\" de tu watchlist?");
+    if (!confirmado)
+      return;
+    
     await Storage.DeleteAsync(id);
     items = await Storage.GetAllAsync();
   }

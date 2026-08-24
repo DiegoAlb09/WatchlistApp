@@ -27,6 +27,7 @@ builder.Services.AddScoped<LocalStorageService>();
 builder.Services.AddScoped<LibraryStorageService>();
 builder.Services.AddScoped<HistorialService>();
 builder.Services.AddScoped<ToastService>();
+builder.Services.AddScoped<ConfirmService>();
 
 // ===== Autenticacion =====
 builder.Services.AddAuthorizationCore();
