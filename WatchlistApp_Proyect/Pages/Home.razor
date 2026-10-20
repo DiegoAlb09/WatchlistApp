@@ -382,7 +382,16 @@ else
   protected override async Task OnInitializedAsync()
   {
     await CargarPreferenciasAsync();
-    items = await Storage.GetAllAsync();
+
+    try
+    {
+      items = await Storage.GetAllAsync();
+    }
+    catch (Exception ex)
+    {
+      items = new();
+      Toasts.Error(ApiHelper.MensajeParaToast(ex, "No se pudo cargar tu watchlist. Revisa tu conexión con el servidor."));
+    }
   }
 
   private async Task CargarPreferenciasAsync()
@@ -457,46 +466,72 @@ else
 
   private async Task MarcarVisto(WatchlistItem item, bool valor)
   {
+    var valorAnterior = item.Visto;
+    item.Visto = valor;
+
     try
     {
-      item.Visto = valor;
       await Storage.UpdateAsync(item);
-
-      if (valor)
-        await Historial.RegistrarAsync(item.Id, item.Titulo);
     }
-    catch (Exception)
+    catch (Exception ex)
     {
-      item.Visto = !valor; // revierte el cambio visual, ya que no se pudo guardar
-      Toasts.Error($"No se pudo actualizar \"{item.Titulo}\". Intenta de nuevo.");
+      item.Visto = valorAnterior;
+      Toasts.Error(ApiHelper.MensajeParaToast(ex, $"No se pudo actualizar \"{item.Titulo}\"."));
+      return;
+    }
+
+    if (valor)
+    {
+      try
+      {
+        await Historial.RegistrarAsync(item.Id, item.Titulo);
+      }
+      catch
+      {
+        // El cambio principal ya se guardo bien; el historial es secundario.
+      }
     }
   }
 
   private async Task MarcarEpisodio(WatchlistItem item, int episodio, bool marcado)
   {
+    var estabaMarcado = item.EpisodiosVistos.Contains(episodio);
+
+    if (marcado)
+    {
+      if (!item.EpisodiosVistos.Contains(episodio))
+        item.EpisodiosVistos.Add(episodio);
+    }
+    else
+    {
+      item.EpisodiosVistos.Remove(episodio);
+    }
+
     try
     {
-      if (marcado)
-      {
-        if (!item.EpisodiosVistos.Contains(episodio))
-          item.EpisodiosVistos.Add(episodio);
-      }
-      else
-      {
-        item.EpisodiosVistos.Remove(episodio);
-      }
       await Storage.UpdateAsync(item);
-
-      if (marcado)
-        await Historial.RegistrarAsync(item.Id, item.Titulo);
     }
-    catch (Exception)
+    catch (Exception ex)
     {
-      // revierte el cambio visual, ya que no se pudo guardar
-      if (marcado) item.EpisodiosVistos.Remove(episodio);
-      else if (!item.EpisodiosVistos.Contains(episodio)) item.EpisodiosVistos.Add(episodio);
+      if (estabaMarcado && !item.EpisodiosVistos.Contains(episodio))
+        item.EpisodiosVistos.Add(episodio);
+      else if (!estabaMarcado)
+        item.EpisodiosVistos.Remove(episodio);
 
-      Toasts.Error($"No se pudo actualizar el episodio {episodio} de \"{item.Titulo}\".");
+      Toasts.Error(ApiHelper.MensajeParaToast(ex, $"No se pudo actualizar el episodio {episodio} de \"{item.Titulo}\"."));
+      return;
+    }
+
+    if (marcado)
+    {
+      try
+      {
+        await Historial.RegistrarAsync(item.Id, item.Titulo);
+      }
+      catch
+      {
+        // Secundario: el episodio ya se guardo bien.
+      }
     }
   }
 
@@ -512,9 +547,9 @@ else
       items = await Storage.GetAllAsync();
       Toasts.Exito($"\"{titulo}\" eliminado.");
     }
-    catch (Exception)
+    catch (Exception ex)
     {
-      Toasts.Error($"No se pudo eliminar \"{titulo}\". Intenta de nuevo.");
+      Toasts.Error(ApiHelper.MensajeParaToast(ex, $"No se pudo eliminar \"{titulo}\"."));
     }
   }
 

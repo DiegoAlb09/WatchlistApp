@@ -145,7 +145,16 @@
   protected override async Task OnInitializedAsync()
   {
     await CargarPreferenciasAsync();
-    items = await Storage.GetAllAsync();
+
+    try
+    {
+      items = await Storage.GetAllAsync();
+    }
+    catch (Exception ex)
+    {
+      items = new();
+      Toasts.Error(ApiHelper.MensajeParaToast(ex, "No se pudo cargar tu lista. Revisa tu conexión con el servidor."));
+    }
   }
 
   private async Task CargarPreferenciasAsync()
@@ -218,10 +227,10 @@
     {
       await Storage.UpdateAsync(libro);
     }
-    catch (Exception)
+    catch (Exception ex)
     {
-      libro.CapituloActual = anterior; // revierte el cambio visual, ya que no se pudo guardar
-      Toasts.Error($"No se pudo actualizar \"{libro.Titulo}\". Intenta de nuevo.");
+      libro.CapituloActual = anterior;
+      Toasts.Error(ApiHelper.MensajeParaToast(ex, $"No se pudo actualizar \"{libro.Titulo}\"."));
       return;
     }
 
@@ -231,10 +240,9 @@
       {
         await Historial.RegistrarAsync(libro.Id, libro.Titulo);
       }
-      catch (Exception)
+      catch
       {
-        // El capitulo ya se guardo bien; si solo falla el registro de
-        // historial (secundario), no vale la pena revertir ni avisar.
+        // El capitulo ya se guardo bien; el historial es secundario.
       }
     }
   }
@@ -250,9 +258,9 @@
       items = await Storage.GetAllAsync();
       Toasts.Exito($"\"{titulo}\" eliminado.");
     }
-    catch (Exception)
+    catch (Exception ex)
     {
-      Toasts.Error($"No se pudo eliminar \"{titulo}\". Intenta de nuevo.");
+      Toasts.Error(ApiHelper.MensajeParaToast(ex, $"No se pudo eliminar \"{titulo}\"."));
     }
   }
 }

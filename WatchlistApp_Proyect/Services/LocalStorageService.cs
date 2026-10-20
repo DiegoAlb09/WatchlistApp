@@ -13,71 +13,74 @@ namespace WatchlistApp_Proyect.Services;
 /// </summary>
 public class LocalStorageService
 {
-    private const string OldStorageKey = "watchlist-items";
-    private const string MigratedFlagKey = "watchlist-items-migrado";
-    private const string ApiBase = "api/watchlist";
+  private const string OldStorageKey = "watchlist-items";
+  private const string MigratedFlagKey = "watchlist-items-migrado";
+  private const string ApiBase = "api/watchlist";
 
-    private readonly HttpClient _http;
-    private readonly IJSRuntime _js;
-    private bool _migracionRevisada = false;
+  private readonly HttpClient _http;
+  private readonly IJSRuntime _js;
+  private bool _migracionRevisada = false;
 
-    public LocalStorageService(HttpClient http, IJSRuntime js)
+  public LocalStorageService(HttpClient http, IJSRuntime js)
+  {
+    _http = http;
+    _js = js;
+  }
+
+  private async Task AsegurarMigracionAsync()
+  {
+    if (_migracionRevisada) return;
+    _migracionRevisada = true;
+
+    var yaMigrado = await _js.InvokeAsync<string?>("localStorage.getItem", MigratedFlagKey);
+    if (yaMigrado == "true") return;
+
+    var json = await _js.InvokeAsync<string?>("localStorage.getItem", OldStorageKey);
+    if (!string.IsNullOrWhiteSpace(json))
     {
-        _http = http;
-        _js = js;
-    }
-
-    private async Task AsegurarMigracionAsync()
-    {
-        if (_migracionRevisada) return;
-        _migracionRevisada = true;
-
-        var yaMigrado = await _js.InvokeAsync<string?>("localStorage.getItem", MigratedFlagKey);
-        if (yaMigrado == "true") return;
-
-        var json = await _js.InvokeAsync<string?>("localStorage.getItem", OldStorageKey);
-        if (!string.IsNullOrWhiteSpace(json))
+      try
+      {
+        var itemsViejos = JsonSerializer.Deserialize<List<WatchlistItem>>(json) ?? new();
+        if (itemsViejos.Count > 0)
         {
-            try
-            {
-                var itemsViejos = JsonSerializer.Deserialize<List<WatchlistItem>>(json) ?? new();
-                if (itemsViejos.Count > 0)
-                {
-                    await _http.PostAsJsonAsync($"{ApiBase}/importar", itemsViejos);
-                }
-            }
-            catch
-            {
-                // Si el JSON viejo estuviera corrupto, no bloqueamos la app; se puede revisar manualmente despues.
-            }
+          await _http.PostAsJsonAsync($"{ApiBase}/importar", itemsViejos);
         }
-
-        // No borramos el localStorage viejo: queda como respaldo por si algo salio mal.
-        await _js.InvokeVoidAsync("localStorage.setItem", MigratedFlagKey, "true");
+      }
+      catch
+      {
+        // Si el JSON viejo estuviera corrupto, no bloqueamos la app; se puede revisar manualmente despues.
+      }
     }
 
-    public async Task<List<WatchlistItem>> GetAllAsync()
-    {
-        await AsegurarMigracionAsync();
-        var items = await _http.GetFromJsonAsync<List<WatchlistItem>>(ApiBase);
-        return items ?? new List<WatchlistItem>();
-    }
+    // No borramos el localStorage viejo: queda como respaldo por si algo salio mal.
+    await _js.InvokeVoidAsync("localStorage.setItem", MigratedFlagKey, "true");
+  }
 
-    public async Task AddAsync(WatchlistItem item)
-    {
-        await AsegurarMigracionAsync();
-        await _http.PostAsJsonAsync(ApiBase, item);
-    }
+  public async Task<List<WatchlistItem>> GetAllAsync()
+  {
+    await AsegurarMigracionAsync();
+    var items = await _http.GetFromJsonAsync<List<WatchlistItem>>(ApiBase);
+    return items ?? new List<WatchlistItem>();
+  }
 
-    public async Task UpdateAsync(WatchlistItem item)
-    {
-        await AsegurarMigracionAsync();
-        await _http.PutAsJsonAsync($"{ApiBase}/{item.Id}", item);
-    }
+  public async Task AddAsync(WatchlistItem item)
+  {
+    await AsegurarMigracionAsync();
+    var respuesta = await _http.PostAsJsonAsync(ApiBase, item);
+    await ApiHelper.VerificarAsync(respuesta);
+  }
 
-    public async Task DeleteAsync(Guid id)
-    {
-        await AsegurarMigracionAsync();
-        await _http.DeleteAsync($"{ApiBase}/{id}");
-    }
+  public async Task UpdateAsync(WatchlistItem item)
+  {
+    await AsegurarMigracionAsync();
+    var respuesta = await _http.PutAsJsonAsync($"{ApiBase}/{item.Id}", item);
+    await ApiHelper.VerificarAsync(respuesta);
+  }
+
+  public async Task DeleteAsync(Guid id)
+  {
+    await AsegurarMigracionAsync();
+    var respuesta = await _http.DeleteAsync($"{ApiBase}/{id}");
+    await ApiHelper.VerificarAsync(respuesta);
+  }
 }

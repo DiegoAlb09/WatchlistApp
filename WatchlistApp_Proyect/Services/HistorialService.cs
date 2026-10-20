@@ -22,6 +22,7 @@ public class HistorialService
   public async Task RegistrarAsync(Guid itemId, string titulo)
   {
     var evento = new HistorialVisto { ItemId = itemId, Titulo = titulo };
-    await _http.PostAsJsonAsync(ApiBase, evento);
+    var respuesta = await _http.PostAsJsonAsync(ApiBase, evento);
+    await ApiHelper.VerificarAsync(respuesta);
   }
 }

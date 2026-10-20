@@ -55,12 +55,11 @@
     <InputNumber @bind-Value="item.CapituloActual" />
 
     <div class="form-buttons">
-      <button type="submit" class="btn-add" disabled="@guardando">@(guardando ? "Guardando..." : (EsEdicion ?
-                             "Guardar cambios" : "Guardar"))</button>
-        <button type="button" class="btn-cancel" @onclick="Cancelar">Cancelar</button>
-      </div>
-    </EditForm>
-  </div>
+      <button type="submit" class="btn-add" disabled="@guardando">@(guardando ? "Guardando..." : (EsEdicion ? "Guardar cambios" : "Guardar"))</button>
+      <button type="button" class="btn-cancel" @onclick="Cancelar">Cancelar</button>
+    </div>
+  </EditForm>
+</div>
 
 @code {
   [Parameter] public Guid? Id { get; set; }
@@ -73,9 +72,16 @@
   {
     if (EsEdicion)
     {
-      var existente = (await Storage.GetAllAsync()).FirstOrDefault(i => i.Id == Id);
-      if (existente is not null)
-        item = existente;
+      try
+      {
+        var existente = (await Storage.GetAllAsync()).FirstOrDefault(i => i.Id == Id);
+        if (existente is not null)
+          item = existente;
+      }
+      catch (Exception ex)
+      {
+        Toasts.Error(ApiHelper.MensajeParaToast(ex, "No se pudo cargar la información. Intenta de nuevo."));
+      }
     }
   }
 
@@ -103,9 +109,9 @@
 
       Nav.NavigateTo("/libros");
     }
-    catch (Exception)
+    catch (Exception ex)
     {
-      Toasts.Error("No se pudo guardar. Revisa tu conexión con el servidor.");
+      Toasts.Error(ApiHelper.MensajeParaToast(ex, "No se pudo guardar. Revisa tu conexión con el servidor."));
     }
     finally
     {

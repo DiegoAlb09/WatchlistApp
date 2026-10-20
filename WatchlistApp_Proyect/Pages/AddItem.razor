@@ -110,24 +110,31 @@
   {
     if (EsEdicion)
     {
-      var existente = (await Storage.GetAllAsync()).FirstOrDefault(i => i.Id == Id);
-      if (existente is not null)
+      try
       {
-        item = existente;
-
-        if (item.FechaInicioEmision is not null)
+        var existente = (await Storage.GetAllAsync()).FirstOrDefault(i => i.Id == Id);
+        if (existente is not null)
         {
-          diaInicio = item.FechaInicioEmision.Value.Day;
-          mesInicio = item.FechaInicioEmision.Value.Month;
-          anioInicio = item.FechaInicioEmision.Value.Year;
-        }
+          item = existente;
 
-        if (item.FechaFinEmision is not null)
-        {
-          diaFin = item.FechaFinEmision.Value.Day;
-          mesFin = item.FechaFinEmision.Value.Month;
-          anioFin = item.FechaFinEmision.Value.Year;
+          if (item.FechaInicioEmision is not null)
+          {
+            diaInicio = item.FechaInicioEmision.Value.Day;
+            mesInicio = item.FechaInicioEmision.Value.Month;
+            anioInicio = item.FechaInicioEmision.Value.Year;
+          }
+
+          if (item.FechaFinEmision is not null)
+          {
+            diaFin = item.FechaFinEmision.Value.Day;
+            mesFin = item.FechaFinEmision.Value.Month;
+            anioFin = item.FechaFinEmision.Value.Year;
+          }
         }
+      }
+      catch (Exception ex)
+      {
+        Toasts.Error(ApiHelper.MensajeParaToast(ex, "No se pudo cargar la información. Intenta de nuevo."));
       }
     }
   }
@@ -234,9 +241,9 @@
 
       Nav.NavigateTo("/");
     }
-    catch (Exception)
+    catch (Exception ex)
     {
-      Toasts.Error("No se pudo guardar. Revisa tu conexión con el servidor.");
+      Toasts.Error(ApiHelper.MensajeParaToast(ex, "No se pudo guardar. Revisa tu conexión con el servidor."));
     }
     finally
     {
