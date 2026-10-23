@@ -14,82 +14,130 @@ public class WatchlistController : ControllerBase
 {
   private readonly AppDbContext _db;
 
-  public WatchlistController(AppDbContext db)
-  {
-    _db = db;
-  }
+  public WatchlistController(AppDbContext db) => _db = db;
 
   private string UserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
-  [HttpGet]
-  public async Task<ActionResult<List<WatchlistItemEntity>>> GetAll()
+  private static WatchlistItemDto Mapear(UsuarioSerieEntity u)
   {
-    var items = await _db.WatchlistItems
-        .Where(i => i.UserId == UserId)
-        .OrderBy(i => i.FechaAgregado)
+    var c = u.Catalogo!;
+    return new WatchlistItemDto
+    {
+      Id = u.Id,
+      Titulo = c.Titulo,
+      PortadaUrl = c.PortadaUrl,
+      Tipo = c.Tipo,
+      EpisodioInicio = c.EpisodioInicio,
+      EpisodioFin = c.EpisodioFin,
+      EnEmision = c.EnEmision,
+      DiaEmision = c.DiaEmision,
+      FechaInicioEmision = c.FechaInicioEmision,
+      FechaFinEmision = c.FechaFinEmision,
+      Visto = u.Visto,
+      EpisodiosVistos = u.EpisodiosVistos,
+      FechaAgregado = u.FechaAgregado
+    };
+  }
+
+  // Copia los datos COMPARTIDO del DTO al catalogo.
+  private static void AplicarCatalogo(CatalogoSerieEntity c, WatchlistItemDto d)
+  {
+    c.Titulo = d.Titulo;
+    c.PortadaUrl = d.PortadaUrl;
+    c.Tipo = d.Tipo;
+    c.EpisodioInicio = d.EpisodioInicio;
+    c.EpisodioFin = d.EpisodioFin;
+    c.EnEmision = d.EnEmision;
+    c.DiaEmision = d.DiaEmision;
+    c.FechaInicioEmision = d.FechaInicioEmision;
+    c.FechaFinEmision = d.FechaFinEmision;
+  }
+
+  // Crea catalogo nuevo + vinculo con el usuario actual.
+  private UsuarioSerieEntity CrearNuevo(WatchlistItemDto d)
+  {
+    var catalogo = new CatalogoSerieEntity { Id = Guid.NewGuid(), CreadoPorUserId = UserId };
+    AplicarCatalogo(catalogo, d);
+
+    var vinculo = new UsuarioSerieEntity
+    {
+      Id = d.Id == Guid.Empty ? Guid.NewGuid() : d.Id,
+      UserId = UserId,
+      Catalogo = catalogo,
+      Visto = d.Visto,
+      EpisodiosVistos = d.EpisodiosVistos,
+      FechaAgregado = d.FechaAgregado == default ? DateTime.UtcNow : d.FechaAgregado
+    };
+    _db.UsuarioSeries.Add(vinculo);
+    return vinculo;
+  }
+
+  [HttpGet]
+  public async Task<ActionResult<List<WatchlistItemDto>>> GetAll()
+  {
+    var filas = await _db.UsuarioSeries
+        .Include(u => u.Catalogo)
+        .Where(u => u.UserId == UserId)
+        .OrderBy(u => u.FechaAgregado)
         .ToListAsync();
-    return Ok(items);
+    return Ok(filas.Select(Mapear).ToList());
   }
 
   [HttpPost]
-  public async Task<ActionResult> Create(WatchlistItemEntity item)
+  public async Task<ActionResult> Create(WatchlistItemDto dto)
   {
-    if (item.Id == Guid.Empty)
-      item.Id = Guid.NewGuid();
-    item.UserId = UserId;
-
-    _db.WatchlistItems.Add(item);
+    var vinculo = CrearNuevo(dto);
     await _db.SaveChangesAsync();
-    return Ok(item);
+    return Ok(Mapear(vinculo));
   }
 
   [HttpPut("{id:guid}")]
-  public async Task<ActionResult> Update(Guid id, WatchlistItemEntity item)
+  public async Task<ActionResult> Update(Guid id, WatchlistItemDto dto)
   {
-    var existente = await _db.WatchlistItems.FirstOrDefaultAsync(i => i.Id == id && i.UserId == UserId);
-    if (existente is null)
-      return NotFound();
+    var vinculo = await _db.UsuarioSeries.Include(u => u.Catalogo)
+        .FirstOrDefaultAsync(u => u.Id == id && u.UserId == UserId);
+    if (vinculo is null) return NotFound();
 
-    existente.Titulo = item.Titulo;
-    existente.PortadaUrl = item.PortadaUrl;
-    existente.Tipo = item.Tipo;
-    existente.EpisodioInicio = item.EpisodioInicio;
-    existente.EpisodioFin = item.EpisodioFin;
-    existente.Visto = item.Visto;
-    existente.EpisodiosVistos = item.EpisodiosVistos;
-    existente.EnEmision = item.EnEmision;
-    existente.DiaEmision = item.DiaEmision;
-    existente.FechaInicioEmision = item.FechaInicioEmision;
-    existente.FechaFinEmision = item.FechaFinEmision;
+    // TEMPORAL (paso 2): como cada titulo solo lo tiene una persona todavia,
+    // editar el catalogo directo es seguro. En el paso 4 esto pasa a ser una
+    // edicion compartida con aviso a los demas usuarios.
+    AplicarCatalogo(vinculo.Catalogo!, dto);
+    vinculo.Visto = dto.Visto;
+    vinculo.EpisodiosVistos = dto.EpisodiosVistos;
 
     await _db.SaveChangesAsync();
-    return Ok(existente);
+    return Ok(Mapear(vinculo));
   }
 
   [HttpDelete("{id:guid}")]
   public async Task<ActionResult> Delete(Guid id)
   {
-    var existente = await _db.WatchlistItems.FirstOrDefaultAsync(i => i.Id == id && i.UserId == UserId);
-    if (existente is null)
-      return NotFound();
+    var vinculo = await _db.UsuarioSeries.Include(u => u.Catalogo)
+        .FirstOrDefaultAsync(u => u.Id == id && u.UserId == UserId);
+    if (vinculo is null) return NotFound();
 
-    _db.WatchlistItems.Remove(existente);
+    _db.UsuarioSeries.Remove(vinculo);
+
+    // Quitar de MI lista no borra el titulo para los demas. Solo si yo era
+    // el ultimo que lo tenia, se limpia tambien el catalogo.
+    var lotienenOtros = await _db.UsuarioSeries
+        .AnyAsync(u => u.CatalogoSerieId == vinculo.CatalogoSerieId && u.Id != vinculo.Id);
+    if (!lotienenOtros)
+      _db.CatalogoSeries.Remove(vinculo.Catalogo!);
+
     await _db.SaveChangesAsync();
     return Ok();
   }
 
-  // Usado una sola vez por el cliente para migrar lo que tenia en localStorage.
+  // Migracion unica desde localStorage. Idempotente por Id.
   [HttpPost("importar")]
-  public async Task<ActionResult> Importar(List<WatchlistItemEntity> items)
+  public async Task<ActionResult> Importar(List<WatchlistItemDto> items)
   {
-    foreach (var item in items)
+    foreach (var dto in items)
     {
-      var yaExiste = await _db.WatchlistItems.AnyAsync(i => i.Id == item.Id);
+      var yaExiste = await _db.UsuarioSeries.AnyAsync(u => u.Id == dto.Id && u.UserId == UserId);
       if (!yaExiste)
-      {
-        item.UserId = UserId;
-        _db.WatchlistItems.Add(item);
-      }
+        CrearNuevo(dto);
     }
 
     await _db.SaveChangesAsync();
