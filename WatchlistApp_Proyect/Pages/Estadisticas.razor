@@ -3,6 +3,7 @@
 @inject LocalStorageService WatchlistStorage
 @inject LibraryStorageService LibraryStorage
 @inject HistorialService HistorialStorage
+@inject ToastService Toasts
 
 <div class="header">
   <h1>
@@ -82,9 +83,21 @@ else
 
   protected override async Task OnInitializedAsync()
   {
-    series = await WatchlistStorage.GetAllAsync();
-    libros = await LibraryStorage.GetAllAsync();
-    historial = await HistorialStorage.GetAllAsync();
+    try
+    {
+      series = await WatchlistStorage.GetAllAsync();
+      libros = await LibraryStorage.GetAllAsync();
+      historial = await HistorialStorage.GetAllAsync();
+    }
+    catch (Exception ex)
+    {
+      // Sin esto, un backend caido dejaba la pagina en "Cargando..." para siempre
+      // (o rota con el error de Blazor). Ahora se muestra vacia + un toast.
+      series ??= new();
+      libros ??= new();
+      historial ??= new();
+      Toasts.Error(ApiHelper.MensajeParaToast(ex, "No se pudieron cargar las estadísticas. Revisa tu conexión con el servidor."));
+    }
   }
 
   private int totalItems => (series?.Count ?? 0) + (libros?.Count ?? 0);
@@ -124,9 +137,6 @@ else
         new() { Label = "Cómics", Valor = libros?.Count(i => i.Tipo == TipoLibro.Comic) ?? 0, Color = "#4ea8de" },
     };
 
-  // Agrupa el historial por año+mes, toma los ultimos 6 meses (incluyendo
-  // meses sin ningun evento, para que la grafica no "salte" huecos), y
-  // los convierte en BarItem reutilizando el mismo componente BarChart.
   private List<BarChart.BarItem> barItemsPorMes
   {
     get

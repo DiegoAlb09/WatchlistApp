@@ -209,6 +209,90 @@ namespace WatchlistApi.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("WatchlistApi.Models.CatalogoLibroEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("CapituloFin")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("CapituloInicio")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("CreadoPorUserId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PortadaUrl")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Tipo")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Titulo")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Titulo");
+
+                    b.ToTable("CatalogoLibros");
+                });
+
+            modelBuilder.Entity("WatchlistApi.Models.CatalogoSerieEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CreadoPorUserId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("DiaEmision")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("EnEmision")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("EpisodioFin")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("EpisodioInicio")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("FechaFinEmision")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("FechaInicioEmision")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PortadaUrl")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Tipo")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Titulo")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Titulo");
+
+                    b.ToTable("CatalogoSeries");
+                });
+
             modelBuilder.Entity("WatchlistApi.Models.HistorialVistoEntity", b =>
                 {
                     b.Property<Guid>("Id")
@@ -268,6 +352,68 @@ namespace WatchlistApi.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("LibroItems");
+                });
+
+            modelBuilder.Entity("WatchlistApi.Models.UsuarioLibroEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("CapituloActual")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("CatalogoLibroId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("FechaAgregado")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CatalogoLibroId");
+
+                    b.HasIndex("UserId", "CatalogoLibroId")
+                        .IsUnique();
+
+                    b.ToTable("UsuarioLibros");
+                });
+
+            modelBuilder.Entity("WatchlistApi.Models.UsuarioSerieEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("CatalogoSerieId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EpisodiosVistos")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("FechaAgregado")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("Visto")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CatalogoSerieId");
+
+                    b.HasIndex("UserId", "CatalogoSerieId")
+                        .IsUnique();
+
+                    b.ToTable("UsuarioSeries");
                 });
 
             modelBuilder.Entity("WatchlistApi.Models.WatchlistItemEntity", b =>
@@ -372,6 +518,50 @@ namespace WatchlistApi.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("WatchlistApi.Models.UsuarioLibroEntity", b =>
+                {
+                    b.HasOne("WatchlistApi.Models.CatalogoLibroEntity", "Catalogo")
+                        .WithMany("Usuarios")
+                        .HasForeignKey("CatalogoLibroId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("WatchlistApi.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Catalogo");
+                });
+
+            modelBuilder.Entity("WatchlistApi.Models.UsuarioSerieEntity", b =>
+                {
+                    b.HasOne("WatchlistApi.Models.CatalogoSerieEntity", "Catalogo")
+                        .WithMany("Usuarios")
+                        .HasForeignKey("CatalogoSerieId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("WatchlistApi.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Catalogo");
+                });
+
+            modelBuilder.Entity("WatchlistApi.Models.CatalogoLibroEntity", b =>
+                {
+                    b.Navigation("Usuarios");
+                });
+
+            modelBuilder.Entity("WatchlistApi.Models.CatalogoSerieEntity", b =>
+                {
+                    b.Navigation("Usuarios");
                 });
 #pragma warning restore 612, 618
         }
