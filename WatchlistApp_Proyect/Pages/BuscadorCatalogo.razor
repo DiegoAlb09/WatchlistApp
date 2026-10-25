@@ -1,0 +1,108 @@
+@implements IDisposable
+@inject CatalogoService Catalogo
+@inject ToastService Toasts
+@inject NavigationManager Nav
+
+<div class="buscador">
+  <label class="buscador-titulo">¿Ya lo agregó alguien más? Búscalo y agregalo sin llenar nada.</label>
+  <input type="text" class="search-input" placeholder="Escribe al menos 2 letras..." value="@texto" @oninput="OnTexto" />
+
+  @if (buscando)
+  {
+    <p class="buscador-estado">Buscando...</p>
+  }
+  else if (texto.Trim().Length >= 2 && resultados.Count == 0)
+  {
+    <p class="buscador-estado">Sin coincidencias. Puedes llenarlo a mano abajo.</p>
+  }
+
+  @foreach (var r in resultados)
+  {
+    <div class="resultado-fila">
+      <div class="resultado-portada" style="background-image:url('@r.PortadaUrl')"></div>
+      <div class="resultado-info">
+        <strong>@r.Titulo</strong>
+        <span>@r.TipoEtiqueta@(string.IsNullOrEmpty(r.Detalle) ? "" : " · " + r.Detalle)</span>
+      </div>
+      @if (r.YaLoTengo)
+      {
+        <span class="resultado-ya">Ya en tu lista</span>
+      }
+      else
+      {
+        <button type="button" class="btn-add" disabled="@(agregandoId is not null)" @onclick="() => Agregar(r)">Agregar</button>
+      }
+    </div>
+  }
+</div>
+
+@code {
+  [Parameter] public bool EsLibros { get; set; }
+
+  private string texto = "";
+  private List<CatalogoResultado> resultados = new();
+  private bool buscando;
+  private Guid? agregandoId;
+  private CancellationTokenSource? _cts;
+
+  private async Task OnTexto(ChangeEventArgs e)
+  {
+    texto = e.Value?.ToString() ?? "";
+
+    _cts?.Cancel();
+    if (texto.Trim().Length < 2)
+    {
+      resultados = new();
+      buscando = false;
+      return;
+    }
+
+    _cts = new CancellationTokenSource();
+    var token = _cts.Token;
+
+    try
+    {
+      await Task.Delay(300, token); // Espera a que dejes de escribir
+      buscando = true;
+      StateHasChanged();
+
+      var lista = await Catalogo.BuscarAsync(EsLibros, texto.Trim());
+      if (!token.IsCancellationRequested)
+        resultados = lista;
+    }
+    catch (TaskCanceledException)
+    {
+      return; // llego una busqueda mas nueva
+    }
+    catch (Exception ex)
+    {
+      Toasts.Error(ApiHelper.MensajeParaToast(ex, "No se pudo buscar. Revisa tu conexión con el servidor."));
+    }
+    finally
+    {
+      if (!token.IsCancellationRequested)
+        buscando = false;
+    }
+  }
+
+  private async Task Agregar(CatalogoResultado r)
+  {
+    agregandoId = r.Id;
+    try
+    {
+      await Catalogo.AgregarAsync(EsLibros, r.Id);
+      Toasts.Exito($"\"{r.Titulo}\" agregado a tu lista.");
+      Nav.NavigateTo(EsLibros ? "/libros" : "/");
+    }
+    catch (Exception ex)
+    {
+      Toasts.Error(ApiHelper.MensajeParaToast(ex, "No se pudo agregar."));
+    }
+    finally
+    {
+      agregandoId = null;
+    }
+  }
+
+  public void Dispose() => _cts?.Cancel();
+}

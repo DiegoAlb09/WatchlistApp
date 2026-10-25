@@ -15,6 +15,8 @@ public class CatalogoController : ControllerBase
   private const int MaxResultados = 10;
   private readonly AppDbContext _db;
 
+  public CatalogoController(AppDbContext db) => _db = db;
+
   private string UserId => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
 
   // Escapa los comodines de LIKE para que buscar "100%" no se interprete como patron

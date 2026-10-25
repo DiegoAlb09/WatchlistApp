@@ -145,3 +145,10 @@
   height: 15px;
   color: var(--muted);
 }
+
+/* Buscador de catalogo */
+.buscador-o {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 4px 0 12px;
+}

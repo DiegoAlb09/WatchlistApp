@@ -12,6 +12,12 @@
     </h1>
   </div>
 
+  @if (!EsEdicion)
+  {
+    <BuscadorCatalogo EsLibros="true" />
+    <p class="buscador-o">¿No lo encuentras? Llena los datos a mano:</p>
+  }
+
   <EditForm Model="item" OnValidSubmit="Guardar" class="form-agregar">
     <DataAnnotationsValidator />
 

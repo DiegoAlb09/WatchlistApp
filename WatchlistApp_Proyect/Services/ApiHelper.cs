@@ -25,6 +25,7 @@ public static class ApiHelper
       HttpStatusCode.Unauthorized => "Tu sesión ha expirado. Inicia sesión nuevamente.",
       HttpStatusCode.NotFound => "No se encontró lo que intentabas modificar (puede que ya se haya eliminado).",
       HttpStatusCode.BadRequest => string.IsNullOrWhiteSpace(detalle) ? "Datos inválidos." : detalle,
+      HttpStatusCode.Conflict => string.IsNullOrEmpty(detalle) ? "Ese dato ya existe." : detalle,
       _ => "Ocurrió un error inesperado. Intenta nuevamente más tarde."
     };
 

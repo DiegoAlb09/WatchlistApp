@@ -35,4 +35,7 @@ builder.Services.AddScoped<CustomAuthStateProvider>();
 builder.Services.AddScoped<AuthenticationStateProvider>(sp => sp.GetRequiredService<CustomAuthStateProvider>());
 builder.Services.AddScoped<AuthService>();
 
+// ===== Servicios de la app =====
+builder.Services.AddScoped<CatalogoService>();
+
 await builder.Build().RunAsync();

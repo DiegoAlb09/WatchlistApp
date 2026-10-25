@@ -143,4 +143,27 @@ public class WatchlistController : ControllerBase
     await _db.SaveChangesAsync();
     return Ok();
   }
+
+  [HttpPost("desde-catalogo/{catalogoId:guid}")]
+  public async Task<ActionResult> AgregarDesdeCatalogo(Guid catalogoId)
+  {
+    var catalogo = await _db.CatalogoSeries.FindAsync(catalogoId);
+    if (catalogo is null) return NotFound();
+
+    var yaLoTiene = await _db.UsuarioSeries
+        .AnyAsync(u => u.CatalogoSerieId == catalogoId && u.UserId == UserId);
+    if (yaLoTiene) return Conflict("Ya tienes este título en tu lista.");
+
+    var vinculo = new UsuarioSerieEntity
+    {
+      Id = Guid.NewGuid(),
+      UserId = UserId,
+      CatalogoSerieId = catalogoId,
+      Catalogo = catalogo,
+      FechaAgregado = DateTime.UtcNow
+    };
+    _db.UsuarioSeries.Add(vinculo);
+    await _db.SaveChangesAsync();
+    return Ok(Mapear(vinculo));
+  }
 }

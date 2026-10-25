@@ -125,4 +125,28 @@ public class LibrosController : ControllerBase
     await _db.SaveChangesAsync();
     return Ok();
   }
+
+  [HttpPost("desde-catalogo/{catalogoId:guid}")]
+  public async Task<ActionResult> AgregarDesdeCatalogo(Guid catalogoId)
+  {
+    var catalogo = await _db.CatalogoLibros.FindAsync(catalogoId);
+    if (catalogo is null) return NotFound();
+
+    var yaLoTiene = await _db.UsuarioLibros
+        .AnyAsync(u => u.CatalogoLibroId == catalogoId && u.UserId == UserId);
+    if (yaLoTiene) return Conflict("Ya tienes este título en tu lista.");
+
+    var vinculo = new UsuarioLibroEntity
+    {
+      Id = Guid.NewGuid(),
+      UserId = UserId,
+      CatalogoLibroId = catalogoId,
+      Catalogo = catalogo,
+      CapituloActual = catalogo.CapituloInicio,
+      FechaAgregado = DateTime.UtcNow
+    };
+    _db.UsuarioLibros.Add(vinculo);
+    await _db.SaveChangesAsync();
+    return Ok(Mapear(vinculo));
+  }
 }
