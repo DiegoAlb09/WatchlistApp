@@ -18,5 +18,8 @@ public class CatalogoLibroEntity
   public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
   public string? CreadoPorUserId { get; set; }
 
+  // null = es la version más reciente
+  public Guid? ReemplazadoPorId { get; set; }
+
   public List<UsuarioLibroEntity> Usuarios { get; set; } = new();
 }

@@ -19,6 +19,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
   public DbSet<UsuarioSerieEntity> UsuarioSeries => Set<UsuarioSerieEntity>();
   public DbSet<CatalogoLibroEntity> CatalogoLibros => Set<CatalogoLibroEntity>();
   public DbSet<UsuarioLibroEntity> UsuarioLibros => Set<UsuarioLibroEntity>();
+  public DbSet<AvisoCambioEntity> AvisosCambio => Set<AvisoCambioEntity>();
 
   // SQLite no soporta listas nativamente: se guarda como "1,2,3" y se convierte de vuelta a List<int>.
   private static ValueComparer<List<int>> NuevoComparerEpisodios() => new(
@@ -87,6 +88,18 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
               .HasForeignKey(x => x.CatalogoLibroId)
               .OnDelete(DeleteBehavior.Restrict);
 
+      e.HasOne<ApplicationUser>()
+              .WithMany()
+              .HasForeignKey(x => x.UserId)
+              .OnDelete(DeleteBehavior.Cascade);
+    });
+
+    // ----- Avisos de cambio -----
+    modelBuilder.Entity<AvisoCambioEntity>(e =>
+    {
+      e.HasIndex(x => new { x.UserId, x.Estado});
+
+      // Si se borra la cuenta se borran sus avisos
       e.HasOne<ApplicationUser>()
               .WithMany()
               .HasForeignKey(x => x.UserId)

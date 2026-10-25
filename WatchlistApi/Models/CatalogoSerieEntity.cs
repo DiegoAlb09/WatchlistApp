@@ -26,5 +26,10 @@ public class CatalogoSerieEntity
 
   // Quien lo creo primero. Solo Informativo (auditoria), no da permisos
   public string? CreadoPorUserId { get; set; }
+
+  // null = es la version mas reciente. Sin FK a proposito
+  // se sigue la cadena y se tolera que una version intermedia ya no exista).
+  public Guid? ReemplazadoPorId { get; set; }
+  
   public List<UsuarioSerieEntity> Usuarios { get; set; } = new();
 }

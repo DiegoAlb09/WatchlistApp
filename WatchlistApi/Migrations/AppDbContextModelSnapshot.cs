@@ -209,6 +209,56 @@ namespace WatchlistApi.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("WatchlistApi.Models.AvisoCambioEntity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("CatalogoId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("CatalogoNuevoId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EditadoPorUserId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("EsLibro")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Estado")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("FechaResolucion")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Resumen")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TituloAnterior")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TituloNuevo")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "Estado");
+
+                    b.ToTable("AvisosCambio");
+                });
+
             modelBuilder.Entity("WatchlistApi.Models.CatalogoLibroEntity", b =>
                 {
                     b.Property<Guid>("Id")
@@ -229,6 +279,9 @@ namespace WatchlistApi.Migrations
 
                     b.Property<string>("PortadaUrl")
                         .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("ReemplazadoPorId")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("Tipo")
@@ -277,6 +330,9 @@ namespace WatchlistApi.Migrations
 
                     b.Property<string>("PortadaUrl")
                         .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("ReemplazadoPorId")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("Tipo")
@@ -512,6 +568,15 @@ namespace WatchlistApi.Migrations
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
+                {
+                    b.HasOne("WatchlistApi.Models.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("WatchlistApi.Models.AvisoCambioEntity", b =>
                 {
                     b.HasOne("WatchlistApi.Models.ApplicationUser", null)
                         .WithMany()
