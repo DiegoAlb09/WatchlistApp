@@ -71,6 +71,41 @@ public class WatchlistController : ControllerBase
     _db.UsuarioSeries.Add(vinculo);
     return vinculo;
   }
+  
+  private static bool CambiaCatalogo(CatalogoSerieEntity c, WatchlistItemDto d) =>
+    c.Titulo != d.Titulo || c.PortadaUrl != d.PortadaUrl ||
+    c.Tipo != d.Tipo || c.EpisodioInicio != d.EpisodioInicio ||
+    c.EpisodioFin != d.EpisodioFin || c.EnEmision != d.EnEmision ||
+    c.DiaEmision != d.DiaEmision || c.FechaInicioEmision != d.FechaInicioEmision ||
+    c.FechaFinEmision != d.FechaFinEmision;
+
+  private static string ResumenCambios(CatalogoSerieEntity c, WatchlistItemDto d)
+  {
+    var l = new List<string>();
+    if (c.Titulo != d.Titulo) l.Add("título");
+    if (c.PortadaUrl != d.PortadaUrl) l.Add("portada");
+    if (c.Tipo != d.Tipo) l.Add("tipo");
+    if (c.EpisodioInicio != d.EpisodioInicio || c.EpisodioFin != d.EpisodioFin) l.Add("rango de capítulos");
+    if (c.EnEmision != d.EnEmision || c.DiaEmision != d.DiaEmision 
+      || c.FechaInicioEmision != d.FechaInicioEmision || c.FechaFinEmision != d.FechaFinEmision) l.Add("datos de emisión");
+
+    return string.Join(", ", l);
+  }
+
+  //Sigue la cadena de versiones hasta la mas reciente que todavia exista.
+  private async Task<CatalogoSerieEntity?> UltimaVersionAsync(Guid id)
+  {
+    var c = await _db.CatalogoSeries.FindAsync(id);
+    var saltos = 0;
+    while (c?.ReemplazadoPorId is Guid siguienteId && saltos++ < 50)
+    {
+      var sig = await _db.CatalogoSeries.FindAsync(siguienteId);
+      if (sig is null) break;
+      c = sig;
+    }
+
+    return c;
+  }
 
   [HttpGet]
   public async Task<ActionResult<List<WatchlistItemDto>>> GetAll()
@@ -98,12 +133,56 @@ public class WatchlistController : ControllerBase
         .FirstOrDefaultAsync(u => u.Id == id && u.UserId == UserId);
     if (vinculo is null) return NotFound();
 
-    // TEMPORAL (paso 2): como cada titulo solo lo tiene una persona todavia,
-    // editar el catalogo directo es seguro. En el paso 4 esto pasa a ser una
-    // edicion compartida con aviso a los demas usuarios.
-    AplicarCatalogo(vinculo.Catalogo!, dto);
+    // El progreso es personal: siempre se guarda directo.
     vinculo.Visto = dto.Visto;
     vinculo.EpisodiosVistos = dto.EpisodiosVistos;
+
+    var actual = vinculo.Catalogo!;
+    if (CambiaCatalogo(actual, dto))
+    {
+      var otros = await _db.UsuarioSeries
+        .Where(u => u.CatalogoSerieId == actual.Id && u.UserId != UserId)
+        .Select(u => u.UserId)
+        .ToListAsync();
+      
+      if (otros.Count == 0)
+      {
+        // Solo yo lo tengo: edicion directa, nadie a quien avisar.
+        AplicarCatalogo(actual, dto);
+      }
+      else
+      {
+        // Otros lo tienen: version NUEVA. Ellos siguen viendo la anterior
+        // hasta que acepten el cambio desde su aviso.
+        var resumen = ResumenCambios(actual, dto);
+
+        var nueva = new CatalogoSerieEntity { Id = Guid.NewGuid(), CreadoPorUserId = UserId };
+        AplicarCatalogo(nueva, dto);
+        _db.CatalogoSeries.Add(nueva);
+
+        vinculo.CatalogoSerieId = nueva.Id;
+        vinculo.Catalogo = nueva;
+
+        if (actual.ReemplazadoPorId is null)
+          actual.ReemplazadoPorId = nueva.Id;
+        
+        foreach (var destinatario in otros)
+        {
+          _db.AvisosCambio.Add(new AvisoCambioEntity
+          {
+            Id = Guid.NewGuid(),
+            UserId = destinatario,
+            EsLibro = false,
+            CatalogoAnteriorId = actual.Id,
+            CatalogoNuevoId = nueva.Id,
+            TituloAnterior = actual.Titulo,
+            TituloNuevo = nueva.Titulo,
+            Resumen = resumen,
+            EditadoPorUserId = UserId
+          });
+        }
+      }
+    }
 
     await _db.SaveChangesAsync();
     return Ok(Mapear(vinculo));
@@ -147,7 +226,7 @@ public class WatchlistController : ControllerBase
   [HttpPost("desde-catalogo/{catalogoId:guid}")]
   public async Task<ActionResult> AgregarDesdeCatalogo(Guid catalogoId)
   {
-    var catalogo = await _db.CatalogoSeries.FindAsync(catalogoId);
+    var catalogo = await UltimaVersionAsync(catalogoId); // Por si pasan una version vieja
     if (catalogo is null) return NotFound();
 
     var yaLoTiene = await _db.UsuarioSeries

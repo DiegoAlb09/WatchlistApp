@@ -30,7 +30,7 @@ public class CatalogoController : ControllerBase
 
     var patron = Patron(q);
     var filas = await _db.CatalogoSeries
-      .Where(c => EF.Functions.Like(c.Titulo, patron, "\\"))
+      .Where(c => c.ReemplazadoPorId == null && EF.Functions.Like(c.Titulo, patron, "\\"))
       .OrderBy(c => c.Titulo)
       .Take(MaxResultados)
       .Select(c => new { Catalogo = c, Ya = c.Usuarios.Any(u => u.UserId == UserId) })
@@ -67,7 +67,7 @@ public class CatalogoController : ControllerBase
     
     var patron = Patron(q);
     var filas = await _db.CatalogoLibros
-      .Where(c => EF.Functions.Like(c.Titulo, patron, "\\"))
+      .Where(c => c.ReemplazadoPorId == null && EF.Functions.Like(c.Titulo, patron, "\\"))
       .OrderBy(c => c.Titulo)
       .Take(MaxResultados)
       .Select(c => new { Catalogo = c, Ya = c.Usuarios.Any(u => u.UserId == UserId) })

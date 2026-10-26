@@ -18,7 +18,7 @@ public class AvisoCambioEntity
   public string UserId { get; set; } = string.Empty;
 
   public bool EsLibro { get; set; }
-  public Guid CatalogoId { get; set; }
+  public Guid CatalogoAnteriorId { get; set; }
   public Guid CatalogoNuevoId { get; set; }
 
   public string TituloAnterior { get; set; } = string.Empty;

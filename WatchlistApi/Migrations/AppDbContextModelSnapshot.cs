@@ -215,7 +215,7 @@ namespace WatchlistApi.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("CatalogoId")
+                    b.Property<Guid>("CatalogoAnteriorId")
                         .HasColumnType("TEXT");
 
                     b.Property<Guid>("CatalogoNuevoId")
