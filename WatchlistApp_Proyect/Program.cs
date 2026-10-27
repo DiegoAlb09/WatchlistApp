@@ -37,5 +37,6 @@ builder.Services.AddScoped<AuthService>();
 
 // ===== Servicios de la app =====
 builder.Services.AddScoped<CatalogoService>();
+builder.Services.AddScoped<AvisosService>();
 
 await builder.Build().RunAsync();

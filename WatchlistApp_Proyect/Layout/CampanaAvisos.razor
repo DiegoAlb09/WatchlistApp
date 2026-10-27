@@ -1,0 +1,138 @@
+﻿@implements IDisposable
+@inject AvisosService Avisos
+@inject ToastService Toasts
+@inject NavigationManager Nav
+
+<button class="campana" title="Avisos" @onclick="Abrir">
+  <Icon Name="campana" />
+  @if (lista.Count > 0)
+  {
+    <span class="campana-contador">@(lista.Count > 9 ? "9+" : lista.Count.ToString())</span>
+  }
+</button>
+
+@if (abierto)
+{
+  <div class="modal-overlay" @onclick="Cerrar">
+    <div class="modal-card modal-card-lg" @onclick:stopPropagation="true">
+      <div class="modal-header-row">
+        <h3>
+          <Icon Name="campana" /> Avisos
+        </h3>
+        <button class="modal-close-x" @onclick="Cerrar">✕</button>
+      </div>
+
+      @if (lista.Count == 0)
+      {
+        <p class="empty-msg">No tienes avisos pendientes.</p>
+      }
+      else
+      {
+        <div class="avisos-lista">
+          @foreach (var a in lista)
+          {
+            <div class="aviso">
+              <p class="aviso-texto">@Descripcion(a)</p>
+              <p class="aviso-nota">Mientras no decidas, sigues viendo tu versión.</p>
+              <div class="aviso-acciones">
+                <button class="btn-random" disabled="@(resolviendo is not null)" @onclick="() => Resolver(a, true)">Aceptar
+                  cambios</button>
+                  <button class="btn-cancel" disabled="@(resolviendo is not null)" @onclick="() => Resolver(a, false)">Mantener
+                    la mía</button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+@code {
+  private List<Aviso> lista = new();
+  private bool abierto;
+  private Guid? resolviendo;
+
+  protected override async Task OnInitializedAsync()
+  {
+    Nav.LocationChanged += OnUbicacion;
+    await Cargar();
+  }
+
+  // El contador se refresca cada vez que navegas a otra pagina.
+  private async void OnUbicacion(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+  {
+    await Cargar();
+    await InvokeAsync(StateHasChanged);
+  }
+
+  private async Task Cargar()
+  {
+    try
+    {
+      lista = await Avisos.PendientesAsync();
+    }
+    catch
+    {
+      // Sin toast: las paginas ya avisan si el backend no responde.
+    }
+  }
+
+  private static string Descripcion(Aviso a)
+  {
+    var cambios = string.IsNullOrWhiteSpace(a.Resumen) ? "datos" : a.Resumen;
+    var texto = $"Alguien cambió {cambios} de \"{a.TituloAnterior}\"";
+    if (a.TituloNuevo != a.TituloAnterior)
+      texto += $" (ahora se llama \"{a.TituloNuevo}\")";
+    return texto + ".";
+  }
+
+  private async Task Abrir()
+  {
+    await Cargar();
+    abierto = true;
+  }
+
+  private void Cerrar() => abierto = false;
+
+  private async Task Resolver(Aviso a, bool aceptar)
+  {
+    resolviendo = a.Id;
+    var aceptado = false;
+
+    try
+    {
+      if (aceptar)
+      {
+        await Avisos.AceptarAsync(a.Id);
+        Toasts.Exito("Cambios aceptados.");
+        aceptado = true;
+      }
+      else
+      {
+        await Avisos.MantenerAsync(a.Id);
+        Toasts.Info("Mantienes tu versión.");
+      }
+    }
+    catch (Exception ex)
+    {
+      Toasts.Error(ApiHelper.MensajeParaToast(ex, "No se pudo resolver el aviso."));
+    }
+    finally
+    {
+      resolviendo = null;
+    }
+
+    await Cargar();
+    if (lista.Count == 0) abierto = false;
+
+    if (aceptado)
+    {
+      // Recarga la lista para ver la version nueva (breve pausa para alcanzar a ver el toast).
+      await Task.Delay(900);
+      Nav.NavigateTo(a.EsLibro ? "/libros" : "/", forceLoad: true);
+    }
+  }
+
+  public void Dispose() => Nav.LocationChanged -= OnUbicacion;
+}

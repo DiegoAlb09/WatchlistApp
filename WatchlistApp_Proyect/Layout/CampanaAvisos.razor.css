@@ -1,0 +1,59 @@
+.campana {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  cursor: pointer;
+}
+.campana:hover {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: var(--accent);
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.avisos-lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  width: 100%;
+  text-align: left;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+.aviso {
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+}
+.aviso-texto {
+  margin: 0 0 4px;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+.aviso-nota {
+  margin: 0 0 var(--space-sm);
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.aviso-acciones {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
