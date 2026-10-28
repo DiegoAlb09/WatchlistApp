@@ -196,15 +196,11 @@ public class WatchlistController : ControllerBase
     if (vinculo is null) return NotFound();
 
     _db.UsuarioSeries.Remove(vinculo);
-
-    // Quitar de MI lista no borra el titulo para los demas. Solo si yo era
-    // el ultimo que lo tenia, se limpia tambien el catalogo.
-    var lotienenOtros = await _db.UsuarioSeries
-        .AnyAsync(u => u.CatalogoSerieId == vinculo.CatalogoSerieId && u.Id != vinculo.Id);
-    if (!lotienenOtros)
-      _db.CatalogoSeries.Remove(vinculo.Catalogo!);
-
     await _db.SaveChangesAsync();
+
+    // El titulo NO se borra del catalogo: queda para que otros lo busquen.
+    // Solo se limpian las versiones viejas que ya nadie tiene.
+    await LimpiezaCatalogo.LimpiarAsync(_db);
     return Ok();
   }
 

@@ -56,6 +56,7 @@ public class AvisosController : ControllerBase
       aviso.Estado = resultado is null ? EstadoAviso.Aceptado : EstadoAviso.Mantenido;
       aviso.FechaResolucion = DateTime.UtcNow;
       await _db.SaveChangesAsync();
+      await LimpiezaCatalogo.LimpiarAsync(_db);
 
       // resultado = mensaje de por que no se pudo mover (el aviso se cierra igual)
       return resultado is null ? Ok() : Conflict(resultado);
@@ -72,6 +73,7 @@ public class AvisosController : ControllerBase
     aviso.Estado = EstadoAviso.Mantenido;
     aviso.FechaResolucion = DateTime.UtcNow;
     await _db.SaveChangesAsync();
+    await LimpiezaCatalogo.LimpiarAsync(_db);
     return Ok();
   }
 }

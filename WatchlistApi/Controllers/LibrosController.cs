@@ -171,13 +171,9 @@ public class LibrosController : ControllerBase
     if (vinculo is null) return NotFound();
 
     _db.UsuarioLibros.Remove(vinculo);
-
-    var lotienenOtros = await _db.UsuarioLibros
-        .AnyAsync(u => u.CatalogoLibroId == vinculo.CatalogoLibroId && u.Id != vinculo.Id);
-    if (!lotienenOtros)
-      _db.CatalogoLibros.Remove(vinculo.Catalogo!);
-
     await _db.SaveChangesAsync();
+
+    await LimpiezaCatalogo.LimpiarAsync(_db);
     return Ok();
   }
 
