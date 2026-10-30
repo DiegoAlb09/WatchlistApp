@@ -39,12 +39,12 @@
 </div>
 
 @code {
-  private bool esOscuro = true;
+  private bool esOscuro = false;
 
   protected override async Task OnInitializedAsync()
   {
     var actual = await JS.InvokeAsync<string>("themeInterop.get");
-    esOscuro = actual != "light";
+    esOscuro = actual == "dark";
   }
 
   private async Task ToggleTheme()

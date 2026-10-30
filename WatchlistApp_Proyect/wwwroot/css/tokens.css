@@ -4,43 +4,84 @@
    ========================================================================== */
 
 :root {
-  --bg: #14151a;
-  --card-bg: #1f2028;
-  --input-bg: #2b2c36;
-  --border: #3a3b45;
-  --text: #f1f1f1;
-  --muted: #999;
-  --accent: #e63946;
-  --accent2: #f77f00;
+  /* ----- Paleta cruda ----- */
+  --signal-orange: #ff5e24;
+  --ember-crust: #6c3200;
+  --cloud-mist: #e3f1fe;
+  --graphite-ink: #232629;
+  --paper-white: #ffffff;
+  --slate-pencil: #5c6066;
+  --ash-mist: #989ea4;
+  --blush-shadow: #dbced0;
+  --midnight-ink: #101828;
 
-  /* Escala de espaciado: usar estos en vez de numeros sueltos como "13px" */
+  /* ----- Semanticos: Tema Claro ----- */
+  --bg: var(--cloud-mist);
+  --card-bg: var(--paper-white);
+  --input-bg: var(--paper-white);
+  --border: var(--blush-shadow); /* Controles: input, botones secundarios */
+  --border-soft: var(--cloud-mist); /* borde fino de tarjetas */
+  --text: var(--graphite-ink);
+  --muted: var(--slate-pencil); /* nunca usar ash-mist para texto: contraste ~2,7:1 */
+  --accent: var(--signal-orange);
+  --accent2: var(--signal-orange); /* compatibilidad: ya no existe un segundo color */
+  --accent-ink: var(--midnight-ink); /* texto SOBRE naranja (contraste ~5,8:1) */
+  --accent-text: var(--ember-crust); /* texto pequeño de color "acento" sobre fondo claro */
+  --danger-bg: var(--blush-shadow); 
+  --danger-ink: var(--graphite-ink);
+
+  /* ----- Tipografia ----- */
+  --font-display: 'Jersey 10', 'Courier New', monospace; /* SOLO titulos >= 36px */
+  --font-body: 'Manrope', system-ui, -apple-system, 'SegoeUI', sans-serif;
+
+  /* ----- Espaciado (base 8px) ----- */
   --space-xs: 4px;
   --space-sm: 8px;
-  --space-md: 12px;
-  --space-lg: 20px;
+  --space-md: 16px;
+  --space-lg: 24px;
   --space-xl: 32px;
+  --space-2xl: 48px;
 
-  /* Escala de radios */
-  --radius-sm: 5px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-pill: 20px;
+  /* ----- Radios ----- */
+  --radius-sm: 6px; /* interactivo pequeño */
+  --radius-md: 6px; /* botones, inputs, navegacion, etiquetas */
+  --radius-lg: 12px; /* tarjetas */
+  --radius-xl: 16px; /* tarjetas grandes, modales */
+  --radius-pill: 6px; /* nombre heredado: los filtros ya NO son pildora, usan 6px */
+
+  /* ----- Sombras ----- */
+  --shadow-md: 
+    rgba(15, 34, 52, 0.01) 0px 27px 11px 0px, 
+    rgba(15, 34, 52, 0.02) 0px 15px 9px 0px, 
+    rgba(15, 34, 52, 0.04) 0px 7px 7px 0px,
+    rgba(15, 34, 52, 0.04) 0px 2px 4px 0px;
+  --shadow-xl:
+    rgba(0, 0, 0, 0.01) 0px 49px 30px 0px,
+    rgba(0, 0, 0, 0.03) 0px 22px 22px 0px,
+    rgba(0, 0, 0, 0.03) 0px 5px 12px 0px;
+  --shadow-subtle: 
+    oklab(1 0 5.96046e-8 / 0.17) 0px 0.5px 0.5px 0.5px inset,
+    oklab(0.598475 0.14309 0.112215 / 0.2) 0px -1px 0.5px 0px inset,
+    rgb(255, 94, 36) 0px 0px 0px 1px;
+  --container: 1200px;
 }
 
-[data-theme="light"] {
-  --bg: #eef0f4;
-  --card-bg: #ffffff;
-  --input-bg: #f1f2f6;
-  --border: #c7cad3;
-  --text: #1a1a1a;
-  --muted: #666;
-  --accent: #e63946;
-  --accent2: #f77f00;
-}
-
-/* Sub-tema de la seccion Libros/Manga/Comics: redefine solo el acento,
-   todo lo demas (bg, card-bg, texto...) se hereda igual de :root / [data-theme] */
-.libros-theme {
-  --accent: #6c5ce7;
-  --accent2: #00b894;
+/* ----- TEMA OSCURO ----- */
+[data-theme="dark"]{
+  --bg: #16181a;
+  --card-bg: var(--graphite-ink);
+  --input-bg: #1b1e21;
+  --border: #3d4247;
+  --border-soft: #2f3438;
+  --text: var(--cloud-mist);
+  --muted: var(--ash-mist); /* ~5,6:1 sobre el grafito */
+  --accent-text: var(--signal-orange); /* ~4,9:1 sobre el grafito */
+  --danger-bg: #4a3b3e;
+  --danger-ink: var(--blush-shadow);
+  --shadow-md:
+    rgba(0, 0, 0, 0.25) 0px 2px 4px 0px,
+    rgba(0, 0, 0, 0.2) 0px 7px 7px 0px;
+  --shadow-xl:
+    rgba(0, 0, 0, 0.35) 0px 5px 12px 0px,
+    rgba(0, 0, 0, 0.3) 0px 22px 22px 0px;
 }

@@ -50,7 +50,7 @@
 }
 
 main {
-  max-width: 900px;
+  max-width: var(--container);
   margin: 0 auto;
   padding: var(--space-lg) var(--space-lg) 60px;
 }
