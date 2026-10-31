@@ -42,13 +42,6 @@
   min-height: 2.4em;
 }
 
-.tipo-tag {
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  color: var(--accent2);
-  margin: 0 0 4px;
-  font-weight: 600;
-}
 .episodios {
   font-size: 0.75rem;
   color: var(--muted);
@@ -97,21 +90,6 @@
   color: var(--text);
 }
 
-.tag-emision {
-  display: inline-block;
-  font-size: 0.6rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  color: white;
-  background: #2ecc71;
-  padding: 2px 6px;
-  border-radius: 4px;
-  margin-left: 6px;
-  vertical-align: middle;
-}
-.tag-finalizado {
-  background: var(--muted);
-}
 
 /* ===== Checklist "Vista" (peliculas) y episodios (series) ===== */
 .visto-check {

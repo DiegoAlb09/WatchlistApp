@@ -1,0 +1,28 @@
+/* ----- Etiquetas. Globales y compartidas ----- */
+
+.tipo-tag {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin: 0 0 4px;
+  font-weight: 700;
+}
+
+.tag-emision {
+  display: inline-block;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  background: var(--accent);
+  color: var(--accent-ink);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.tag-finalizado {
+  background: var(--blush-shadow);
+  color: var(--graphite-ink);
+}

@@ -4,27 +4,6 @@
   flex-wrap: wrap;
 }
 
-.btn-random {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--input-bg);
-  color: var(--text);
-  border: 1px solid var(--border);
-  padding: 10px 16px;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 0.9rem;
-  transition:
-    border-color 0.2s ease,
-    color 0.2s ease;
-}
-.btn-random:hover {
-  border-color: var(--accent);
-  color: var(--accent);
-}
-
 .modal-overlay {
   position: fixed;
   inset: 0;
