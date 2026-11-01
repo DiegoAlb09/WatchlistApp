@@ -1,6 +1,8 @@
 .bar-chart {
   background: var(--card-bg);
+  border: 1px solid var(--border-soft);
   border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
   padding: var(--space-lg);
   display: flex;
   flex-direction: column;
@@ -14,10 +16,11 @@
 }
 .bar-label {
   font-size: 0.85rem;
+  font-weight: 600;
   color: var(--muted);
 }
 .bar-track {
-  background: var(--input-bg);
+  background: var(--bg);
   border-radius: 6px;
   height: 14px;
   overflow: hidden;
@@ -30,6 +33,6 @@
 .bar-value {
   font-size: 0.85rem;
   color: var(--text);
-  font-weight: 600;
+  font-weight: 700;
   text-align: right;
 }

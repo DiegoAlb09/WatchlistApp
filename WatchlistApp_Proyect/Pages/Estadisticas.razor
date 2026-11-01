@@ -44,14 +44,14 @@ else
     <h2 class="stats-subtitle">Progreso general por sección</h2>
     <div class="donuts-row">
       <div class="donut-card">
-        <DonutChart Porcentaje="@porcentajeSeries" Color="#e63946" />
+        <DonutChart Porcentaje="@porcentajeSeries" Color="var(--chart-1)" />
         <p>
           <Icon Name="film" /> Series y Películas
         </p>
         <span class="donut-detalle">@episodiosVistos episodios/películas vistas de @episodiosTotales</span>
       </div>
       <div class="donut-card">
-        <DonutChart Porcentaje="@porcentajeLibros" Color="#6c5ce7" />
+        <DonutChart Porcentaje="@porcentajeLibros" Color="var(--chart-2)" />
         <p>
           <Icon Name="book" /> Libros, Manga y Cómics
         </p>
@@ -130,11 +130,11 @@ else
 
   private List<BarChart.BarItem> barItemsPorTipo => new()
     {
-        new() { Label = "Series", Valor = series?.Count(i => i.Tipo == TipoContenido.Serie) ?? 0, Color = "#e63946" },
-        new() { Label = "Películas", Valor = series?.Count(i => i.Tipo == TipoContenido.Pelicula) ?? 0, Color = "#f77f00" },
-        new() { Label = "Libros", Valor = libros?.Count(i => i.Tipo == TipoLibro.Libro) ?? 0, Color = "#6c5ce7" },
-        new() { Label = "Manga", Valor = libros?.Count(i => i.Tipo == TipoLibro.Manga) ?? 0, Color = "#00b894" },
-        new() { Label = "Cómics", Valor = libros?.Count(i => i.Tipo == TipoLibro.Comic) ?? 0, Color = "#4ea8de" },
+        new() { Label = "Series", Valor = series?.Count(i => i.Tipo == TipoContenido.Serie) ?? 0, Color = "var(--chart-1)" },
+        new() { Label = "Películas", Valor = series?.Count(i => i.Tipo == TipoContenido.Pelicula) ?? 0, Color = "var(--chart-2)" },
+        new() { Label = "Libros", Valor = libros?.Count(i => i.Tipo == TipoLibro.Libro) ?? 0, Color = "var(--chart-3)" },
+        new() { Label = "Manga", Valor = libros?.Count(i => i.Tipo == TipoLibro.Manga) ?? 0, Color = "var(--chart-4)" },
+        new() { Label = "Cómics", Valor = libros?.Count(i => i.Tipo == TipoLibro.Comic) ?? 0, Color = "var(--chart-5)" },
     };
 
   private List<BarChart.BarItem> barItemsPorMes
@@ -160,7 +160,7 @@ else
         {
           Label = mes.ToString("MMM yy"),
           Valor = cantidad,
-          Color = "#e63946"
+          Color = "var(--chart-1)"
         });
       }
 

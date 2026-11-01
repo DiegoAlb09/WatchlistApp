@@ -64,6 +64,13 @@
     oklab(0.598475 0.14309 0.112215 / 0.2) 0px -1px 0.5px 0px inset,
     rgb(255, 94, 36) 0px 0px 0px 1px;
   --container: 1200px;
+
+  /* ----- Graficas ----- */
+  --chart-1: var(--signal-orange);
+  --chart-2: var(--graphite-ink);
+  --chart-3: var(--slate-pencil);
+  --chart-4: var(--ash-mist);
+  --chart-5: var(--blush-shadow);
 }
 
 /* ----- TEMA OSCURO ----- */
@@ -84,4 +91,10 @@
   --shadow-xl:
     rgba(0, 0, 0, 0.35) 0px 5px 12px 0px,
     rgba(0, 0, 0, 0.3) 0px 22px 22px 0px;
+  
+  --chart-1: var(--signal-orange);
+  --chart-2: var(--cloud-mist);
+  --chart-3: var(--ash-mist);
+  --chart-4: #6a7077;
+  --chart-5: #4a4f54;
 }
