@@ -1,23 +1,22 @@
 /* ===== Tarjetas de series/peliculas ===== */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-lg);
 }
-
 .card {
   background: var(--card-bg);
-  border-radius: 10px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
   overflow: hidden;
   display: flex;
   flex-direction: column;
 }
-
 .cover {
-  height: 200px;
+  height: 210px;
   background-size: cover;
   background-position: center;
-  background-color: var(--input-bg);
+  background-color: var(--bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -27,45 +26,42 @@
   width: 40px;
   height: 40px;
 }
-
 .card-body {
-  padding: 10px var(--space-md);
+  padding: var(--space-md);
 }
-
 .card-body h3 {
   font-size: 0.95rem;
   margin: 0 0 4px;
   color: var(--text);
-  font-weight: 600;
+  font-weight: 700;
   line-height: 1.3;
   overflow-wrap: break-word;
   min-height: 2.4em;
 }
-
 .episodios {
   font-size: 0.75rem;
   color: var(--muted);
-  margin: 0 0 8px;
+  margin: 0 0 var(--space-sm);
 }
-
 .card-actions {
   display: flex;
   gap: 6px;
   margin-top: 4px;
 }
 
+/* ----- Completados compactos ----- */
 .seccion-completados {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
   font-size: 1rem;
   color: var(--muted);
-  margin: 24px 0 10px;
+  margin: var(--space-xl) 0 10px;
 }
 .seccion-completados .icon {
   width: 18px;
   height: 18px;
-  color: #2ecc71;
+  color: var(--accent);
 }
 .completados-compactos {
   display: flex;
@@ -77,17 +73,19 @@
   align-items: center;
   gap: 10px;
   background: var(--card-bg);
+  border: 1px solid var(--border-soft);
   border-radius: var(--radius-md);
   padding: var(--space-sm) var(--space-md);
   font-size: 0.85rem;
 }
 .check-ok {
-  color: #2ecc71;
+  color: var(--accent);
   display: flex;
 }
 .titulo-compacto {
   flex: 1;
   color: var(--text);
+  font-weight: 600;
 }
 
 
@@ -97,7 +95,8 @@
   align-items: center;
   gap: 10px;
   font-size: 0.85rem;
-  margin-bottom: 8px;
+  font-weight: 600;
+  margin-bottom: var(--space-sm);
   cursor: pointer;
   padding: 10px 14px;
   border-radius: var(--radius-md);
@@ -115,13 +114,7 @@
   border-radius: var(--radius-sm);
   background: transparent;
   cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   position: relative;
-  transition:
-    background 0.15s ease,
-    border-color 0.15s ease;
 }
 .visto-check input[type="checkbox"]:checked {
   background: var(--accent);
@@ -134,16 +127,15 @@
   top: 0px;
   width: 5px;
   height: 9px;
-  border: solid white;
+  border: solid var(--accent-ink);
   border-width: 0 2px 2px 0;
   transform: rotate(45deg);
 }
-
 .episodios-grid {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-sm);
   max-height: 90px;
   overflow-y: auto;
 }
@@ -151,19 +143,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   background: var(--input-bg);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   font-size: 0.7rem;
+  font-weight: 600;
   color: var(--muted);
   cursor: pointer;
   position: relative;
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease,
-    color 0.2s ease;
 }
 .ep-check input {
   position: absolute;
@@ -173,30 +162,30 @@
 .ep-check:has(input:checked) {
   background: var(--accent);
   border-color: var(--accent);
-  color: white;
+  color: var(--accent-ink);
 }
 
 /* ===== Calendario de estrenos: pestanas Semana/Mes ===== */
 .calendario-tabs {
   display: flex;
-  gap: 8px;
+  gap: var(--space-sm);
   margin-bottom: var(--space-md);
   width: 100%;
 }
 .calendario-tabs button {
   flex: 1;
-  background: var(--input-bg);
+  background: var(--card-bg);
   border: 1px solid var(--border);
-  color: var(--muted);
-  padding: 6px 10px;
+  color: var(--text);
+  padding: 8px 10px;
   border-radius: var(--radius-md);
   cursor: pointer;
   font-size: 0.8rem;
+  font-weight: 600;
 }
 .calendario-tabs button.tab-activo {
-  background: var(--accent);
   border-color: var(--accent);
-  color: white;
+  box-shadow: 0 0 0 1px var(--accent);
 }
 
 /* ===== Calendario: vista semanal (lista) ===== */
@@ -211,32 +200,29 @@
 }
 
 .calendario-dia {
-  background: var(--input-bg);
-  border: 1px solid var(--border);
+  background: var(--bg);
+  border: 1px solid var(--border-soft);
   border-radius: var(--radius-md);
   padding: var(--space-sm) var(--space-md);
 }
 .calendario-dia.calendario-hoy {
   border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 10%, var(--input-bg));
+  box-shadow: 0 0 0 1px var(--accent);
 }
-
 .calendario-dia-nombre {
   display: block;
   font-size: 0.8rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--muted);
   margin-bottom: 6px;
 }
 .calendario-hoy .calendario-dia-nombre {
-  color: var(--accent);
+  color: var(--text);
 }
-
 .calendario-vacio {
   font-size: 0.8rem;
   color: var(--muted);
 }
-
 .calendario-chips {
   display: flex;
   flex-wrap: wrap;
@@ -245,9 +231,10 @@
 .calendario-chip {
   background: var(--card-bg);
   border: 1px solid var(--border);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-sm);
   padding: 4px 10px;
   font-size: 0.8rem;
+  font-weight: 600;
   color: var(--text);
 }
 
@@ -260,22 +247,24 @@
   margin-bottom: var(--space-sm);
 }
 .mes-nav button {
-  background: var(--input-bg);
+  background: var(--card-bg);
   border: 1px solid var(--border);
   color: var(--text);
   width: 28px;
   height: 28px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-size: 1rem;
 }
+.mes-nav button:hover {
+  border-color: var(--accent);
+}
 .mes-nombre {
   font-size: 0.9rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text);
   text-transform: capitalize;
 }
-
 .mes-dias-header {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -285,13 +274,13 @@
 .mes-dias-header span {
   text-align: center;
   font-size: 0.65rem;
+  font-weight: 700;
   color: var(--muted);
   text-transform: uppercase;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
 .mes-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -302,9 +291,9 @@
   overflow-x: hidden;
 }
 .mes-celda {
-  background: var(--input-bg);
-  border: 1px solid var(--border);
-  border-radius: 6px;
+  background: var(--bg);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-sm);
   padding: 3px;
   min-height: 52px;
   min-width: 0;
@@ -313,18 +302,18 @@
   gap: 2px;
 }
 .mes-celda.mes-fuera {
-  opacity: 0.35;
+  opacity: 0.4;
 }
 .mes-celda.mes-hoy {
   border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 12%, var(--input-bg));
+  box-shadow: 0 0 0 1px var(--accent);
 }
 .mes-numero {
   font-size: 0.7rem;
   color: var(--muted);
 }
 .mes-hoy .mes-numero {
-  color: var(--accent);
+  color: var(--text);
   font-weight: 700;
 }
 .mes-chips {
@@ -335,8 +324,9 @@
 }
 .mes-chip {
   font-size: 0.55rem;
+  font-weight: 700;
   background: var(--accent);
-  color: white;
+  color: var(--accent-ink);
   border-radius: 3px;
   padding: 1px 3px;
   min-width: 0;

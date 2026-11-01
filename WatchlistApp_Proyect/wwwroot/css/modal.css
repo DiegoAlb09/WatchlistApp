@@ -1,3 +1,5 @@
+/* MODALES (Obscura). Los botones (.btn-random, .btn-delete-confirm...) viven en buttons.css */
+
 .header-actions {
   display: flex;
   gap: var(--space-sm);
@@ -7,19 +9,20 @@
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(35, 38, 41, 0.55);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 100;
   padding: var(--space-lg);
 }
-
 .modal-card {
   background: var(--card-bg);
-  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
   padding: var(--space-lg);
-  max-width: 320px;
+  max-width: 340px;
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -30,7 +33,7 @@
 }
 @keyframes modal-pop {
   from {
-    transform: scale(0.95);
+    transform: scale(0.96);
     opacity: 0;
   }
   to {
@@ -38,21 +41,20 @@
     opacity: 1;
   }
 }
-
 .modal-kicker {
   font-size: 0.75rem;
+  font-weight: 700;
   color: var(--muted);
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
 }
-
 .modal-cover {
   width: 100%;
   height: 220px;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   background-size: cover;
   background-position: center;
-  background-color: var(--input-bg);
+  background-color: var(--bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -63,16 +65,15 @@
   width: 40px;
   height: 40px;
 }
-
 .modal-card h3 {
   margin: 8px 0 0;
   color: var(--text);
   font-size: 1.1rem;
+  font-weight: 700;
 }
-
 .modal-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--space-sm);
   margin-top: var(--space-md);
   width: 100%;
 }
@@ -80,12 +81,12 @@
   flex: 1;
   justify-content: center;
 }
-
 .modal-cerrar {
   background: transparent;
   border: none;
   color: var(--muted);
   font-size: 0.8rem;
+  font-weight: 600;
   margin-top: var(--space-sm);
   cursor: pointer;
   text-decoration: underline;
@@ -94,9 +95,8 @@
   color: var(--text);
 }
 
-/* Variante ancha + encabezado con boton de cerrar (calendario) */
 .modal-card-lg {
-  max-width: 520px;
+  max-width: 560px;
 }
 .modal-header-row {
   display: flex;
@@ -108,9 +108,8 @@
 .modal-header-row h3 {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-sm);
   margin: 0;
-  color: var(--text);
   font-size: 1.1rem;
 }
 .modal-close-x {
@@ -124,4 +123,21 @@
 }
 .modal-close-x:hover {
   color: var(--text);
+}
+
+/* Confirmacion de eliminar */
+.modal-icono {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+.modal-icono .icon {
+  width: 40px;
+  height: 40px;
+  color: var(--accent);
+}
+.modal-mensaje {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 4px 0 0;
 }
