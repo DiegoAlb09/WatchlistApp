@@ -66,11 +66,14 @@ else
 
   @if (!ItemsFiltrados.Any())
   {
-    <p class="empty-msg">
-      @(items.Count == 0
-          ? "Aún no has agregado nada. ¡Presiona \"Agregar\" para empezar!"
-          : "Nada coincide con tu búsqueda/filtro.")
-    </p>
+    <div class="estado-vacio">
+      <PixelCat />
+      <p class="empty-msg">
+        @(items.Count == 0
+            ? "Aún no has agregado nada. ¡Presiona \"Agregar\" para empezar!"
+            : "Nada coincide con tu búsqueda/filtro.")
+      </p>
+    </div>
   }
   else
   {

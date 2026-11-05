@@ -1,0 +1,41 @@
+﻿@* Dibuja una cuadricula de pixeles como SVG plano: sin suavizado, sin degradados.
+   Cada caracter de Filas es un pixel; '.' (o cualquiera fuera de Paleta) = transparente.
+   Los pixeles contiguos del mismo color se fusionan en un solo rectangulo. *@
+<svg class="pixel-sprite" xmlns="http://www.w3.org/2000/svg" width="@(Columnas * Escala)"
+     height="@(Filas.Length * Escala)" viewBox="0 0 @Columnas @Filas.Length" shape-rendering="crispEdges"
+     role="presentation" aria-hidden="true">
+  @foreach (var r in Rectangulos())
+  {
+    <rect x="@r.X" y="@r.Y" width="@r.Ancho" height="1" fill="@r.Color" />
+  }
+</svg>
+
+@code {
+  [Parameter] public string[] Filas { get; set; } = Array.Empty<string>();
+  [Parameter] public Dictionary<char, string> Paleta { get; set; } = new();
+  [Parameter] public int Escala { get; set; } = 4;
+
+  private int Columnas => Filas.Length == 0 ? 0 : Filas.Max(f => f.Length);
+
+  private IEnumerable<(int X, int Y, int Ancho, string Color)> Rectangulos()
+  {
+    for (int y = 0; y < Filas.Length; y++)
+    {
+      var fila = Filas[y];
+      int x = 0;
+      while (x < fila.Length)
+      {
+        var c = fila[x];
+        if (!Paleta.TryGetValue(c, out var color))
+        {
+          x++;
+          continue;
+        }
+
+        int inicio = x;
+        while (x < fila.Length && fila[x] == c) x++;
+        yield return (inicio, y, x - inicio, color);
+      }
+    }
+  }
+}

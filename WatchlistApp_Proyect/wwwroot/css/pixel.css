@@ -1,0 +1,79 @@
+/* PIXEL ART (Obscura): nubes en las esquinas y mascota. Todo plano, sin suavizado. */
+
+.pixel-sprite {
+  display: block;
+}
+
+/* ----- Cielo de la app principal: solo cuando sobran margenes (contenedor 1200px) ----- */
+.cielo {
+  display: none;
+}
+.cielo-nube {
+  position: absolute;
+}
+.cielo-a {
+  top: 110px;
+  left: 28px;
+}
+.cielo-b {
+  top: 280px;
+  right: 36px;
+}
+.cielo-c {
+  bottom: 56px;
+  left: 80px;
+}
+
+@media (min-width: 1500px) {
+  .cielo {
+    display: block;
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+}
+.page {
+  position: relative;
+  z-index: 1;
+}
+
+/* En tema oscuro las nubes claras serian estridentes: se atenuan (decision propia). */
+[data-theme="dark"] .cielo {
+  opacity: 0.18;
+}
+
+/* ----- Login / Registro: las nubes se ven a cualquier ancho > 700px ----- */
+.cielo-auth {
+  display: block;
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+@media (max-width: 700px) {
+  .cielo-auth {
+    display: none;
+  }
+}
+.auth-page {
+  position: relative;
+  z-index: 1;
+}
+.auth-mascota {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--space-sm);
+}
+
+/* ----- Estado vacio con mascota ----- */
+.estado-vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-top: var(--space-xl);
+}
+.estado-vacio .empty-msg {
+  margin-top: 0;
+}

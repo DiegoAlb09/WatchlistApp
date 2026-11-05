@@ -27,7 +27,7 @@
 .search-input,
 .sort-select {
   background: var(--input-bg);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-input);
   color: var(--text);
   padding: 10px var(--space-md);
   border-radius: var(--radius-md);

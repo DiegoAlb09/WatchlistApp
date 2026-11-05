@@ -20,6 +20,7 @@
   --card-bg: var(--paper-white);
   --input-bg: var(--paper-white);
   --border: var(--blush-shadow); /* Controles: input, botones secundarios */
+  --border-input: #8a9097; /* 3,22:1 sobre blanco */
   --border-soft: var(--cloud-mist); /* borde fino de tarjetas */
   --text: var(--graphite-ink);
   --muted: var(--slate-pencil); /* nunca usar ash-mist para texto: contraste ~2,7:1 */
@@ -79,6 +80,7 @@
   --card-bg: var(--graphite-ink);
   --input-bg: #1b1e21;
   --border: #3d4247;
+  --border-input: #737a81; /* 3,85:1 sobre el input, 3,5:1 sobre la tarjeta */
   --border-soft: #2f3438;
   --text: var(--cloud-mist);
   --muted: var(--ash-mist); /* ~5,6:1 sobre el grafito */

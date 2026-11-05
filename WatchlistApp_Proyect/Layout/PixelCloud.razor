@@ -1,0 +1,78 @@
+﻿@using System.Text
+@* Nube 8-bit: se calcula sobre una cuadricula chica (union de circulos con base plana),
+   se le pone contorno de 1 pixel #5c6066 y 4 tonos planos de Cloud Mist/blanco.
+   Tamano maximo ~100px: el documento pide <= 120px. *@
+<PixelSprite Filas="@Filas" Paleta="@Paleta" Escala="@Escala" />
+
+@code {
+  [Parameter] public int Variante { get; set; }
+  [Parameter] public int Escala { get; set; } = 4;
+
+  // 'o' contorno, 'w' blanco, 'l' casi blanco, 'm' Cloud Mist, 's' sombra de la nube.
+  // 'l' y 's' son tonos intermedios derivados (decision propia: el documento pide "3-4 tonos").
+  private static readonly Dictionary<char, string> Paleta = new()
+  {
+    ['o'] = "#5c6066",
+    ['w'] = "#ffffff",
+    ['l'] = "#f1f8ff",
+    ['m'] = "#e3f1fe",
+    ['s'] = "#cde4f8"
+  };
+
+  private record Forma(int W, int H, (double X, double Y, double R)[] Circulos, (int X0, int Y0, int X1, int Y1) Piso);
+
+  private static readonly Forma[] Formas =
+  {
+        new(26, 12, new[] { (7.0, 8.0, 3.2), (12.0, 5.2, 5.0), (18.0, 6.5, 4.0), (22.0, 8.5, 2.8) }, (7, 8, 21, 10)),
+        new(20, 10, new[] { (5.0, 7.0, 2.8), (10.0, 4.6, 4.0), (15.0, 6.5, 3.0) }, (5, 7, 16, 9)),
+        new(22, 10, new[] { (6.0, 7.0, 3.0), (11.0, 5.0, 4.4), (16.0, 6.0, 3.6), (19.5, 7.5, 2.3) }, (6, 7, 18, 9)),
+    };
+
+  private string[]? _filas;
+  private string[] Filas => _filas ??= Construir(Variante);
+
+  private static string[] Construir(int variante)
+  {
+    var f = Formas[Math.Abs(variante) % Formas.Length];
+    var mascara = new bool[f.H, f.W];
+
+    for (int y = 0; y < f.H; y++)
+      for (int x = 0; x < f.W; x++)
+      {
+        double cx = x + 0.5, cy = y + 0.5;
+        bool enCirculo = y <= f.Piso.Y1 &&
+            f.Circulos.Any(c => (cx - c.X) * (cx - c.X) + (cy - c.Y) * (cy - c.Y) <= c.R * c.R);
+        bool enPiso = x >= f.Piso.X0 && x <= f.Piso.X1 && y >= f.Piso.Y0 && y <= f.Piso.Y1;
+        mascara[y, x] = enCirculo || enPiso;
+      }
+
+    int minX = int.MaxValue, maxX = -1, minY = int.MaxValue, maxY = -1;
+    for (int y = 0; y < f.H; y++)
+      for (int x = 0; x < f.W; x++)
+        if (mascara[y, x])
+        {
+          minX = Math.Min(minX, x); maxX = Math.Max(maxX, x);
+          minY = Math.Min(minY, y); maxY = Math.Max(maxY, y);
+        }
+
+    bool Dentro(int x, int y) => x >= 0 && y >= 0 && x < f.W && y < f.H && mascara[y, x];
+
+    var filas = new string[maxY - minY + 1];
+    for (int y = minY; y <= maxY; y++)
+    {
+      var sb = new StringBuilder();
+      for (int x = minX; x <= maxX; x++)
+      {
+        if (!mascara[y, x]) { sb.Append('.'); continue; }
+
+        bool borde = !Dentro(x - 1, y) || !Dentro(x + 1, y) || !Dentro(x, y - 1) || !Dentro(x, y + 1);
+        if (borde) { sb.Append('o'); continue; }
+
+        double t = maxY == minY ? 0 : (double)(y - minY) / (maxY - minY);
+        sb.Append(t < 0.3 ? 'w' : t < 0.55 ? 'l' : t < 0.8 ? 'm' : 's');
+      }
+      filas[y - minY] = sb.ToString();
+    }
+    return filas;
+  }
+}
