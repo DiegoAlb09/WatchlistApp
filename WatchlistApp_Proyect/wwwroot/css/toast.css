@@ -1,26 +1,28 @@
+/* TOASTS (Obscura): sin segundo color. Exito = acento naranja; error = fondo de peligro; info = neutro. */
+
 .toast-stack {
   position: fixed;
-  top: 20px;
+  top: 72px; /* debajo de la barra fija */
   right: 20px;
   z-index: 200;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  max-width: 320px;
+  max-width: 340px;
 }
-
 .toast {
   display: flex;
   align-items: center;
   gap: 10px;
   background: var(--card-bg);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-soft);
   border-left: 4px solid var(--muted);
   border-radius: var(--radius-md);
   padding: 12px 14px;
   font-size: 0.85rem;
+  font-weight: 600;
   color: var(--text);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-xl);
   animation: toast-in 0.2s ease-out;
 }
 @keyframes toast-in {
@@ -41,37 +43,39 @@
 .toast span {
   flex: 1;
 }
-
 .toast-cerrar {
   background: transparent;
   border: none;
-  color: var(--muted);
+  color: inherit;
+  opacity: 0.6;
   cursor: pointer;
   font-size: 0.9rem;
   padding: 0;
   flex-shrink: 0;
 }
 .toast-cerrar:hover {
-  color: var(--text);
+  opacity: 1;
 }
 
 .toast-exito {
-  border-left-color: #2ecc71;
-}
-.toast-exito .icon {
-  color: #2ecc71;
-}
-
-.toast-error {
   border-left-color: var(--accent);
 }
-.toast-error .icon {
+.toast-exito .icon {
   color: var(--accent);
 }
 
+.toast-error {
+  background: var(--danger-bg);
+  color: var(--danger-ink);
+  border-left-color: var(--danger-ink);
+}
+.toast-error .icon {
+  color: var(--danger-ink);
+}
+
 .toast-info {
-  border-left-color: #4ea8de;
+  border-left-color: var(--muted);
 }
 .toast-info .icon {
-  color: #4ea8de;
+  color: var(--muted);
 }

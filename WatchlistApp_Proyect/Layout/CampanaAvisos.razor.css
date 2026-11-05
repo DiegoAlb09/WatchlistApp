@@ -5,22 +5,26 @@
   justify-content: center;
   width: 36px;
   height: 36px;
-  border-radius: 50%;
-  background: var(--input-bg);
+  border-radius: var(--radius-md);
+  background: var(--card-bg);
   border: 1px solid var(--border);
   color: var(--text);
   cursor: pointer;
 }
 .campana:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+.campana-contador {
   position: absolute;
-  top: -4px;
-  right: -4px;
+  top: -6px;
+  right: -6px;
   min-width: 18px;
   height: 18px;
   padding: 0 4px;
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   background: var(--accent);
-  color: white;
+  color: var(--accent-ink);
   font-size: 0.65rem;
   font-weight: 700;
   display: flex;
@@ -37,8 +41,8 @@
   overflow-y: auto;
 }
 .aviso {
-  background: var(--input-bg);
-  border: 1px solid var(--border);
+  background: var(--bg);
+  border: 1px solid var(--border-soft);
   border-radius: var(--radius-md);
   padding: var(--space-md);
 }

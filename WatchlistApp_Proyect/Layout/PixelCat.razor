@@ -1,0 +1,31 @@
+﻿<PixelSprite Filas="@Filas" Paleta="@Paleta" Escala="@Escala" />
+
+@code {
+  [Parameter] public int Escala { get; set; } = 4;
+
+  // o = naranja, g = gris calido, k = grafito (ojos)
+  private static readonly Dictionary<char, string> Paleta = new()
+  {
+    ['o'] = "#ff5e24",
+    ['g'] = "#dbced0",
+    ['k'] = "#232629"
+  };
+
+  private static readonly string[] Filas =
+  {
+    "...o........o...",
+    "...oo......oo...",
+    "...ogo....ogo...",
+    "..oooooooooooo..",
+    "..oooooooooooo..",
+    "..oookooookooo..",
+    "..oooooggooooo..",
+    "...oooooooooo...",
+    "....oooooooo..o.",
+    "...oooggggooo.o.",
+    "...oooggggooooo.",
+    "...oooooooooo...",
+    "...oo......oo...",
+    "...gg......gg..."
+  };
+}

@@ -1,3 +1,5 @@
+/* Libros.razor (Obscura): lista de filas. Ya sin acento propio. */
+
 .libro-lista {
   display: flex;
   flex-direction: column;
@@ -7,7 +9,9 @@
   display: flex;
   gap: 14px;
   background: var(--card-bg);
-  border-radius: 10px;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
   padding: var(--space-md);
   align-items: center;
 }
@@ -15,10 +19,10 @@
   width: 60px;
   height: 90px;
   flex-shrink: 0;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   background-size: cover;
   background-position: center;
-  background-color: var(--input-bg);
+  background-color: var(--bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -35,6 +39,7 @@
 .libro-info h3 {
   margin: 0 0 4px;
   font-size: 0.95rem;
+  font-weight: 700;
   color: var(--text);
   overflow-wrap: break-word;
 }
@@ -45,28 +50,34 @@
   margin: 6px 0;
 }
 .stepper button {
-  width: 26px;
-  height: 26px;
-  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
-  background: var(--input-bg);
+  background: var(--card-bg);
   color: var(--text);
   cursor: pointer;
   font-size: 1rem;
+  font-weight: 700;
+}
+.stepper button:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
 }
 .stepper span {
   font-size: 0.8rem;
+  font-weight: 600;
   color: var(--muted);
 }
 .mini-progress {
-  background: var(--border);
-  border-radius: 4px;
+  background: var(--bg);
+  border-radius: 6px;
   height: 6px;
   overflow: hidden;
   max-width: 220px;
 }
 .mini-progress-fill {
-  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  background: var(--accent);
   height: 100%;
 }
 .libro-actions {
@@ -76,5 +87,5 @@
   flex-shrink: 0;
 }
 .libro-actions button {
-  width: 90px;
+  width: 100px;
 }

@@ -3,10 +3,16 @@
 * { box-sizing: border-box; }
 
 body {
-  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-family: var(--font-body);
   background: var(--bg);
   color: var(--text);
   margin: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Los controles de formulario NO heredan la fuente por defecto del navegador */
+button, input, select, textarea {
+  font-family: inherit;
 }
 
 .icon {
@@ -20,7 +26,7 @@ body {
 #blazor-error-ui {
   display: none;
   background: var(--accent);
-  color: white;
+  color: var(--accent-ink);
   padding: var(--space-md);
   position: fixed;
   bottom: 0;
