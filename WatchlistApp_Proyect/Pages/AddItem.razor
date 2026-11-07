@@ -114,34 +114,32 @@
 
   protected override async Task OnInitializedAsync()
   {
-    if (EsEdicion)
+    if (!EsEdicion) return;
+
+    try
     {
-      try
-      {
-        var existente = (await Storage.GetAllAsync()).FirstOrDefault(i => i.Id == Id);
-        if (existente is not null)
-        {
-          item = existente;
+      var existente = (await Storage.GetAllAsync()).FirstOrDefault(i => i.Id == Id);
+      if (existente is null) return;
 
-          if (item.FechaInicioEmision is not null)
-          {
-            diaInicio = item.FechaInicioEmision.Value.Day;
-            mesInicio = item.FechaInicioEmision.Value.Month;
-            anioInicio = item.FechaInicioEmision.Value.Year;
-          }
+      item = existente;
 
-          if (item.FechaFinEmision is not null)
-          {
-            diaFin = item.FechaFinEmision.Value.Day;
-            mesFin = item.FechaFinEmision.Value.Month;
-            anioFin = item.FechaFinEmision.Value.Year;
-          }
-        }
-      }
-      catch (Exception ex)
+      if (item.FechaInicioEmision is not null)
       {
-        Toasts.Error(ApiHelper.MensajeParaToast(ex, "No se pudo cargar la información. Intenta de nuevo."));
+        diaInicio = item.FechaInicioEmision.Value.Day;
+        mesInicio = item.FechaInicioEmision.Value.Month;
+        anioInicio = item.FechaInicioEmision.Value.Year;
       }
+
+      if (item.FechaFinEmision is not null)
+      {
+        diaFin = item.FechaFinEmision.Value.Day;
+        mesFin = item.FechaFinEmision.Value.Month;
+        anioFin = item.FechaFinEmision.Value.Year;
+      }
+    }
+    catch (Exception ex)
+    {
+      Toasts.Error(ApiHelper.MensajeParaToast(ex, "No se pudo cargar la información. Intenta de nuevo."));
     }
   }
 
@@ -158,14 +156,8 @@
     if (dia is null || mes is null || anio is null)
       return null;
 
-    try
-    {
-      return new DateTime(anio.Value, mes.Value, dia.Value);
-    }
-    catch (ArgumentOutOfRangeException)
-    {
-      return null;
-    }
+    try { return new DateTime(anio.Value, mes.Value, dia.Value); }
+    catch (ArgumentOutOfRangeException) { return null; }
   }
 
   private async Task Guardar()
@@ -201,12 +193,12 @@
       }
       else
       {
-        var soloAlgunosCamposInicio = (diaInicio is not null || mesInicio is not null || anioInicio is not null)
+        var inicioIncompleto = (diaInicio is not null || mesInicio is not null || anioInicio is not null)
             && (diaInicio is null || mesInicio is null || anioInicio is null);
-        var soloAlgunosCamposFin = (diaFin is not null || mesFin is not null || anioFin is not null)
+        var finIncompleto = (diaFin is not null || mesFin is not null || anioFin is not null)
             && (diaFin is null || mesFin is null || anioFin is null);
 
-        if (soloAlgunosCamposInicio || soloAlgunosCamposFin)
+        if (inicioIncompleto || finIncompleto)
         {
           errorFechas = "Completa día, mes y año, o deja los tres vacíos.";
           return;

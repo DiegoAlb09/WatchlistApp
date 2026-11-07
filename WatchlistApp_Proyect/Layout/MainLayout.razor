@@ -29,9 +29,21 @@
   </div>
 </div>
 
+@* Imprescindibles: sin estos dos componentes no se ve ningun toast ni confirmacion *@
 <ToastContainer />
 <ConfirmModal />
-<AuthLayout />
+
+<div class="cielo" aria-hidden="true">
+  <div class="cielo-nube cielo-a">
+    <PixelCloud Variante="0" />
+  </div>
+  <div class="cielo-nube cielo-b">
+    <PixelCloud Variante="1" />
+  </div>
+  <div class="cielo-nube cielo-c">
+    <PixelCloud Variante="2" />
+  </div>
+</div>
 
 <div class="page">
   <main>

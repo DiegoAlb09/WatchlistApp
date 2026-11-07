@@ -429,8 +429,7 @@ else
       Busqueda = busqueda,
       Orden = orden
     };
-    var json = JsonSerializer.Serialize(prefs);
-    await JS.InvokeVoidAsync("localStorage.setItem", PrefsKey, json);
+    await JS.InvokeVoidAsync("localStorage.setItem", PrefsKey, JsonSerializer.Serialize(prefs));
   }
 
   private void IrAAgregar() => Nav.NavigateTo("/agregar");
@@ -485,14 +484,8 @@ else
 
     if (valor)
     {
-      try
-      {
-        await Historial.RegistrarAsync(item.Id, item.Titulo);
-      }
-      catch
-      {
-        // El cambio principal ya se guardo bien; el historial es secundario.
-      }
+      try { await Historial.RegistrarAsync(item.Id, item.Titulo); }
+      catch { /* el historial es secundario: el cambio principal ya se guardo */ }
     }
   }
 
@@ -502,8 +495,7 @@ else
 
     if (marcado)
     {
-      if (!item.EpisodiosVistos.Contains(episodio))
-        item.EpisodiosVistos.Add(episodio);
+      if (!estabaMarcado) item.EpisodiosVistos.Add(episodio);
     }
     else
     {
@@ -527,14 +519,8 @@ else
 
     if (marcado)
     {
-      try
-      {
-        await Historial.RegistrarAsync(item.Id, item.Titulo);
-      }
-      catch
-      {
-        // Secundario: el episodio ya se guardo bien.
-      }
+      try { await Historial.RegistrarAsync(item.Id, item.Titulo); }
+      catch { /* secundario */ }
     }
   }
 
@@ -556,7 +542,7 @@ else
     }
   }
 
-  private async Task ElegirAlAzar()
+  private void ElegirAlAzar()
   {
     var candidatos = (items ?? new()).Where(i => !i.EstaCompleta).ToList();
 
@@ -574,8 +560,7 @@ else
     if (opciones.Count == 0)
       opciones = candidatos;
 
-    var random = new Random();
-    sorpresa = opciones[random.Next(opciones.Count)];
+    sorpresa = opciones[new Random().Next(opciones.Count)];
     ultimoElegidoId = sorpresa.Id;
   }
 

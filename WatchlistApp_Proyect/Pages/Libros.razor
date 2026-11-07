@@ -184,8 +184,7 @@
   private async Task GuardarPreferenciasAsync()
   {
     var prefs = new PreferenciasUI { Filtro = filtro, SoloEnProgreso = soloEnProgreso, Busqueda = busqueda, Orden = orden };
-    var json = JsonSerializer.Serialize(prefs);
-    await JS.InvokeVoidAsync("localStorage.setItem", PrefsKey, json);
+    await JS.InvokeVoidAsync("localStorage.setItem", PrefsKey, JsonSerializer.Serialize(prefs));
   }
 
   private void IrAAgregar() => Nav.NavigateTo("/libros/agregar");
@@ -239,14 +238,8 @@
 
     if (nuevo > anterior)
     {
-      try
-      {
-        await Historial.RegistrarAsync(libro.Id, libro.Titulo);
-      }
-      catch
-      {
-        // El capitulo ya se guardo bien; el historial es secundario.
-      }
+      try { await Historial.RegistrarAsync(libro.Id, libro.Titulo); }
+      catch { /* secundario */ }
     }
   }
 

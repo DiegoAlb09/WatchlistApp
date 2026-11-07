@@ -1,22 +1,19 @@
 @implements IDisposable
 @inject ToastService Toasts
 
-<div class="toast-stack">
+<div class="notif-stack" aria-live="polite">
   @foreach (var toast in Toasts.Mensajes.ToList())
   {
-    <div class="toast toast-@ClaseTipo(toast.Tipo)" @key="toast.Id">
+    <div class="notif notif-@ClaseTipo(toast.Tipo)" @key="toast.Id">
       <Icon Name="@IconoTipo(toast.Tipo)" />
       <span>@toast.Texto</span>
-      <button class="toast-cerrar" @onclick="() => Toasts.Cerrar(toast.Id)">✕</button>
+      <button class="notif-cerrar" @onclick="() => Toasts.Cerrar(toast.Id)">✕</button>
     </div>
   }
 </div>
 
 @code {
-  protected override void OnInitialized()
-  {
-    Toasts.OnChange += Refrescar;
-  }
+  protected override void OnInitialized() => Toasts.OnChange += Refrescar;
 
   private void Refrescar() => InvokeAsync(StateHasChanged);
 
@@ -27,15 +24,7 @@
     _ => "info"
   };
 
-  private static string IconoTipo(TipoToast tipo) => tipo switch
-  {
-    TipoToast.Exito => "check",
-    TipoToast.Error => "alerta",
-    _ => "alerta"
-  };
+  private static string IconoTipo(TipoToast tipo) => tipo == TipoToast.Exito ? "check" : "alerta";
 
-  public void Dispose()
-  {
-    Toasts.OnChange -= Refrescar;
-  }
+  public void Dispose() => Toasts.OnChange -= Refrescar;
 }

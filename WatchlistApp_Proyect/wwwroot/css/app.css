@@ -1,3 +1,5 @@
+/* INDICE. No agregues reglas sueltas aqui - cada cosa va en su modulo. */
+
 @import "tokens.css";
 @import "base.css";
 @import "layout.css";
@@ -8,4 +10,3 @@
 @import "auth.css";
 @import "toast.css";
 @import "pixel.css";
-@import "modal-confirm-snippet.css";

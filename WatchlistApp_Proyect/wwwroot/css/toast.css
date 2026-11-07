@@ -1,16 +1,18 @@
-/* TOASTS (Obscura): sin segundo color. Exito = acento naranja; error = fondo de peligro; info = neutro. */
+/* NOTIFICACIONES (Obscura). Antes se llamaban .toast, pero Bootstrap define .toast:not(.show){display:none} y las ocultaba. z-index por encima de la barra fija (50), del modal (100) y de las nubes (0). */
 
-.toast-stack {
+.notif-stack {
   position: fixed;
-  top: 72px; /* debajo de la barra fija */
+  top: 72px;
   right: 20px;
-  z-index: 200;
+  z-index: 1000;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  max-width: 340px;
+  width: min(340px, calc(100vw - 40px));
+  pointer-events: none;
 }
-.toast {
+.notif {
+  pointer-events: auto;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -23,9 +25,9 @@
   font-weight: 600;
   color: var(--text);
   box-shadow: var(--shadow-xl);
-  animation: toast-in 0.2s ease-out;
+  animation: notif-in 0.2s ease-out;
 }
-@keyframes toast-in {
+@keyframes notif-in {
   from {
     transform: translateX(20px);
     opacity: 0;
@@ -35,15 +37,15 @@
     opacity: 1;
   }
 }
-.toast .icon {
+.notif .icon {
   width: 18px;
   height: 18px;
   flex-shrink: 0;
 }
-.toast span {
+.notif span {
   flex: 1;
 }
-.toast-cerrar {
+.notif-cerrar {
   background: transparent;
   border: none;
   color: inherit;
@@ -53,29 +55,29 @@
   padding: 0;
   flex-shrink: 0;
 }
-.toast-cerrar:hover {
+.notif-cerrar:hover {
   opacity: 1;
 }
 
-.toast-exito {
+.notif-exito {
   border-left-color: var(--accent);
 }
-.toast-exito .icon {
+.notif-exito .icon {
   color: var(--accent);
 }
 
-.toast-error {
+.notif-error {
   background: var(--danger-bg);
   color: var(--danger-ink);
   border-left-color: var(--danger-ink);
 }
-.toast-error .icon {
+.notif-error .icon {
   color: var(--danger-ink);
 }
 
-.toast-info {
+.notif-info {
   border-left-color: var(--muted);
 }
-.toast-info .icon {
+.notif-info .icon {
   color: var(--muted);
 }
