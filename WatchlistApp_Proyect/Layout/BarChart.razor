@@ -1,13 +1,15 @@
+@using System.Globalization
+@* Barras horizontales PROPORCIONALES: el ancho de cada una es su valor / el valor maximo.
+   El ancho se escribe con InvariantCulture para que nunca salga "42,4%" (CSS invalido). *@
 <div class="bar-chart">
   @foreach (var item in Items)
   {
     <div class="bar-row">
       <span class="bar-label">@item.Label</span>
       <div class="bar-track">
-        <div class="bar-fill" style="width:@(Max == 0 ? 0 : Math.Round(item.Valor / 
-          Max * 100, 1))%; background:@item.Color;"></div>
+        <div class="bar-fill" style="width:@Ancho(item.Valor)%; background:@item.Color"></div>
       </div>
-      <span class="bar-value">@item.Valor</span>
+      <span class="bar-value">@item.Valor.ToString("0")</span>
     </div>
   }
 </div>
@@ -19,6 +21,16 @@
     public double Valor { get; set; }
     public string Color { get; set; } = "var(--accent)";
   }
+
   [Parameter] public List<BarItem> Items { get; set; } = new();
-  private double Max => Items.Count == 0 ? 0 : Items.Max(i => i.Valor);
+
+  private double Maximo => Items.Count == 0 ? 0 : Items.Max(i => i.Valor);
+
+  private string Ancho(double valor)
+  {
+    if (Maximo <= 0 || valor <= 0) return "0";
+    var pct = valor * 100.0 / Maximo;
+    pct = Math.Clamp(pct, 2, 100); // minimo 2%: un valor chico igual se ve
+    return pct.ToString("0.##", CultureInfo.InvariantCulture);
+  }
 }
