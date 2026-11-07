@@ -43,12 +43,13 @@ public class LocalStorageService
         var itemsViejos = JsonSerializer.Deserialize<List<WatchlistItem>>(json) ?? new();
         if (itemsViejos.Count > 0)
         {
+          // Best-effort: si la migracion falla, no bloqueamos la carga normal de la app.
           await _http.PostAsJsonAsync($"{ApiBase}/importar", itemsViejos);
         }
       }
       catch
       {
-        // Si el JSON viejo estuviera corrupto, no bloqueamos la app; se puede revisar manualmente despues.
+        // JSON viejo corrupto, o fallo de red durante la migracion: se puede reintentar despues.
       }
     }
 

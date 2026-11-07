@@ -3,7 +3,7 @@
 
 @if (Confirm.Visible)
 {
-  <div class="modal-overlay" onclick="() => Confirm.Responder(false)">
+  <div class="modal-overlay" @onclick="() => Confirm.Responder(false)">
     <div class="modal-card" @onclick:stopPropagation="true">
       <div class="modal-icono">
         <Icon Name="alerta" />
@@ -12,12 +12,8 @@
       <p class="modal-mensaje">@Confirm.Mensaje</p>
 
       <div class="modal-actions">
-        <button class="btn-cancel" @onclick="() => Confirm.Responder(false)">
-          Cancelar
-        </button>
-        <button class="btn-delete-confirm" @onclick="() => Confirm.Responder(true)">
-          Eliminar
-        </button>
+        <button class="btn-cancel" @onclick="() => Confirm.Responder(false)">Cancelar</button>
+        <button class="btn-delete-confirm" @onclick="() => Confirm.Responder(true)">Eliminar</button>
       </div>
     </div>
   </div>

@@ -9,6 +9,12 @@ public class ToastMensaje
   public TipoToast Tipo { get; set; } = TipoToast.Info;
 }
 
+/// <summary>
+/// Cola simple de notificaciones flotantes. Cualquier pagina/componente
+/// puede inyectar este servicio y llamar Exito()/Error() despues de una
+/// accion (guardar, eliminar, marcar visto, etc). ToastContainer.razor
+/// se suscribe a OnChange y dibuja los mensajes activos.
+/// </summary>
 public class ToastService
 {
   public event Action? OnChange;

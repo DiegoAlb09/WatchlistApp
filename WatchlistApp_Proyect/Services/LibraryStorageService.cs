@@ -42,7 +42,7 @@ public class LibraryStorageService
       }
       catch
       {
-        // JSON viejo corrupto: no bloqueamos la app.
+        // JSON viejo corrupto, o fallo de red durante la migracion: se puede reintentar despues.
       }
     }
 
