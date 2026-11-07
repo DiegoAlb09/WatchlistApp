@@ -1,0 +1,36 @@
+﻿@using System.Globalization
+@* Columnas verticales (tiempo de izquierda a derecha). La altura es proporcional al maximo.
+   El ultimo elemento marcado como Actual va en naranja pleno; los anteriores, mas suaves. *@
+<div class="column-chart">
+  @foreach (var item in Items)
+  {
+    <div class="col">
+      <span class="col-valor">@item.Valor.ToString("0")</span>
+      <div class="col-track">
+        <div class="col-bar @(item.Actual ? "" : "col-pasado") @(item.Valor <= 0 ? "col-cero" : "")"
+             style="height:@Alto(item.Valor)%"></div>
+      </div>
+      <span class="col-label">@item.Label</span>
+    </div>
+  }
+</div>
+
+@code {
+  public class ColumnItem
+  {
+    public string Label { get; set; } = "";
+    public double Valor { get; set; }
+    public bool Actual { get; set; }
+  }
+
+  [Parameter] public List<ColumnItem> Items { get; set; } = new();
+
+  private double Maximo => Items.Count == 0 ? 0 : Items.Max(i => i.Valor);
+
+  private string Alto(double valor)
+  {
+    if (Maximo <= 0 || valor <= 0) return "0";
+    var pct = Math.Clamp(valor * 100.0 / Maximo, 3, 100);
+    return pct.ToString("0.##", CultureInfo.InvariantCulture);
+  }
+}

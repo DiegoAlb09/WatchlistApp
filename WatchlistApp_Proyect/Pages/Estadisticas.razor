@@ -17,8 +17,11 @@
 }
 else if (series.Count == 0 && libros.Count == 0)
 {
-  <p class="empty-msg">Todavía no hay nada agregado en ninguna sección — las estadísticas aparecerán aquí en cuanto
-    agregues algo.</p>
+  <div class="estado-vacio">
+    <PixelCat />
+    <p class="empty-msg">Todavía no hay nada agregado en ninguna sección — las estadísticas aparecerán aquí en cuanto
+      agregues algo.</p>
+    </div>
   }
 else
   {
@@ -62,14 +65,24 @@ else
     <h2 class="stats-subtitle">Distribución por tipo</h2>
     <BarChart Items="@barItemsPorTipo" />
 
-    <h2 class="stats-subtitle">Vistas por mes (últimos 6 meses)</h2>
+    <div class="stats-titulo-fila">
+      <h2 class="stats-subtitle">Vistas por mes</h2>
+      <div class="filters periodo">
+        @foreach (var m in new[] { 3, 6, 12 })
+        {
+          var valor = m;
+          <button class="@(meses == valor ? "filtro-activo" : "")" @onclick="() => meses = valor">@valor meses</button>
+        }
+      </div>
+    </div>
+
     @if (historial.Count == 0)
     {
       <p class="empty-msg">Todavía no tienes historial — marca algo como visto para empezar a ver esta gráfica.</p>
     }
     else
     {
-      <BarChart Items="@barItemsPorMes" />
+      <ColumnChart Items="@columnasPorMes" />
       <span class="donut-detalle bloque-detalle">
         @historial.Count capítulos/películas vistas registradas en total
       </span>
@@ -80,6 +93,7 @@ else
   private List<WatchlistItem>? series;
   private List<LibroItem>? libros;
   private List<HistorialVisto>? historial;
+  private int meses = 6;
 
   protected override async Task OnInitializedAsync()
   {
@@ -91,8 +105,6 @@ else
     }
     catch (Exception ex)
     {
-      // Sin esto, un backend caido dejaba la pagina en "Cargando..." para siempre
-      // (o rota con el error de Blazor). Ahora se muestra vacia + un toast.
       series ??= new();
       libros ??= new();
       historial ??= new();
@@ -137,7 +149,7 @@ else
         new() { Label = "Cómics", Valor = libros?.Count(i => i.Tipo == TipoLibro.Comic) ?? 0, Color = "var(--chart-5)" },
     };
 
-  private List<BarChart.BarItem> barItemsPorMes
+  private List<ColumnChart.ColumnItem> columnasPorMes
   {
     get
     {
@@ -148,19 +160,19 @@ else
           .GroupBy(h => new DateTime(h.Fecha.Year, h.Fecha.Month, 1))
           .ToDictionary(g => g.Key, g => g.Count());
 
-      var resultado = new List<BarChart.BarItem>();
+      var resultado = new List<ColumnChart.ColumnItem>();
       var mesActual = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
 
-      for (int i = 5; i >= 0; i--)
+      for (int i = meses - 1; i >= 0; i--)
       {
         var mes = mesActual.AddMonths(-i);
         conteoPorMes.TryGetValue(mes, out var cantidad);
 
-        resultado.Add(new BarChart.BarItem
+        resultado.Add(new ColumnChart.ColumnItem
         {
           Label = mes.ToString("MMM yy"),
           Valor = cantidad,
-          Color = "var(--chart-1)"
+          Actual = i == 0
         });
       }
 
