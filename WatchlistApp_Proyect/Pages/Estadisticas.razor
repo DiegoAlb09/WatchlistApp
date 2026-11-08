@@ -65,6 +65,9 @@ else
           <span class="stat-detalle">días seguidos</span>
         </div>
       </div>
+
+      <h2 class="stats-subtitle">Mapa de actividad <span class="stats-nota">(últimas 12 semanas)</span></h2>
+      <ActividadHeatmap Dias="@actividadPorDia" Semanas="12" />
     }
 
     <h2 class="stats-subtitle">Progreso general por sección</h2>
@@ -212,6 +215,11 @@ else
       return mejor;
     }
   }
+
+
+  // Cuantas cosas viste cada dia (clave = solo la fecha, en hora local). Alimenta el mapa de actividad.
+  private Dictionary<DateTime, int> actividadPorDia =>
+      historial?.GroupBy(h => FechaLocal(h).Date).ToDictionary(g => g.Key, g => g.Count()) ?? new();
 
   // ===== Actividad por dia de la semana (respeta el selector de periodo) =====
   private static readonly (DayOfWeek Dia, string Nombre)[] DiasSemana =

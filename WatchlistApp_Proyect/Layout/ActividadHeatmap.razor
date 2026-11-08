@@ -1,0 +1,127 @@
+﻿@* Mapa de actividad en cuadritos: una columna por semana (lunes a domingo), una celda por dia.
+  Intensidad en 4 niveles de naranja segun cuantas cosas viste ese dia. Los dias futuros
+  de la semana actual se dibujan como huecos invisibles para no romper la cuadricula. *@
+<div class="heatmap-card">
+  <div class="heatmap">
+    <div class="hm-meses">
+      @for (int w = 0; w < Semanas; w++)
+      {
+        <span>@EtiquetaMes(w)</span>
+      }
+    </div>
+    <div class="hm-cuerpo">
+      <div class="hm-dias">
+        <span>Lun</span><span></span><span>Mié</span><span></span><span>Vie</span><span></span><span>Dom</span>
+      </div>
+      <div class="hm-grid">
+        @for (int w = 0; w < Semanas; w++)
+        {
+          for (int d = 0; d < 7; d++)
+          {
+            var fecha = Inicio.AddDays(w * 7 + d);
+            if (fecha > Hoy)
+            {
+              <span class="hm-celda hm-futuro"></span>
+            }
+            else
+            {
+              var n = Cuenta(fecha);
+              <span class="hm-celda hm-n@(Nivel(n))" title="@Titulo(fecha, n)"></span>
+            }
+          }
+        }
+      </div>
+    </div>
+    <div class="hm-leyenda">
+      <span>Menos</span>
+      <span class="hm-celda hm-n0"></span>
+      <span class="hm-celda hm-n1"></span>
+      <span class="hm-celda hm-n2"></span>
+      <span class="hm-celda hm-n3"></span>
+      <span class="hm-celda hm-n4"></span>
+      <span>Más</span>
+    </div>
+  </div>
+
+  <div class="hm-resumen">
+    <div class="hm-dato">
+      <span class="hm-numero">@DiasActivos</span>
+      <span class="hm-texto">de @DiasTranscurridos días con actividad</span>
+    </div>
+    <div class="hm-dato">
+      <span class="hm-numero">@Total</span>
+      <span class="hm-texto">vistas en @Semanas semanas</span>
+    </div>
+    @if (MejorDia is not null)
+    {
+      <div class="hm-dato">
+        <span class="hm-texto">Tu día más fuerte: <strong>@MejorDia.Value.Dia @Meses[MejorDia.Value.Mes - 1]</strong>
+          (@MejorDia.Value.Cantidad @(MejorDia.Value.Cantidad == 1 ? "vista" : "vistas"))</span>
+        </div>
+      }
+    </div>
+  </div>
+
+@code {
+  /// <summary>Cantidad de cosas vistas por dia (la clave debe ser solo la fecha, en hora local).</summary>
+  [Parameter] public Dictionary<DateTime, int> Dias { get; set; } = new();
+  [Parameter] public int Semanas { get; set; } = 12;
+
+  private static readonly string[] Meses = 
+  { "ene", "feb", "mar", "abr", 
+    "may", "jun", "jul", "ago", 
+    "sep", "oct", "nov", "dic" 
+  };
+
+  private static DateTime Hoy => DateTime.Today;
+
+  // Lunes de la semana actual, retrocediendo (Semanas - 1) semanas.
+  private DateTime Inicio
+  {
+    get
+    {
+      var lunes = Hoy.AddDays(-(((int)Hoy.DayOfWeek + 6) % 7));
+      return lunes.AddDays(-7 * (Semanas - 1));
+    }
+  }
+
+  private int Cuenta(DateTime fecha) => Dias.TryGetValue(fecha.Date, out var n) ? n : 0;
+
+  private int Maximo => Dias.Where(kv => kv.Key >= Inicio && kv.Key <= Hoy).Select(kv =>
+kv.Value).DefaultIfEmpty(0).Max();
+
+  // 0 = sin actividad; 1 a 4 = proporcional al dia mas fuerte del periodo.
+  private int Nivel(int n) => n <= 0 || Maximo <= 0 ? 0 : (int)Math.Ceiling(4.0 * n / Maximo);
+
+  private static string Titulo(DateTime f, int n) =>
+      $"{f.Day} {Meses[f.Month - 1]}: {n} {(n == 1 ? "vista" : "vistas")}";
+
+  // Se rotula el mes en la primera semana de cada mes.
+  private string EtiquetaMes(int semana)
+  {
+    var lunes = Inicio.AddDays(semana * 7);
+    if (semana == 0 || lunes.AddDays(-7).Month != lunes.Month)
+      return Meses[lunes.Month - 1];
+    return "";
+  }
+
+  private IEnumerable<DateTime> DiasDelPeriodo()
+  {
+    for (var f = Inicio; f <= Hoy; f = f.AddDays(1))
+      yield return f;
+  }
+
+  private int DiasTranscurridos => DiasDelPeriodo().Count();
+  private int DiasActivos => DiasDelPeriodo().Count(f => Cuenta(f) > 0);
+  private int Total => DiasDelPeriodo().Sum(Cuenta);
+
+  private (int Dia, int Mes, int Cantidad)? MejorDia
+  {
+    get
+    {
+      var mejor = DiasDelPeriodo().Select(f => (f, n: Cuenta(f))).Where(x => x.n > 0).OrderByDescending(x => 
+        x.n).FirstOrDefault();
+      return mejor.n > 0 ? (mejor.f.Day, mejor.f.Month, mejor.n) : null;
+    }
+  }
+}
