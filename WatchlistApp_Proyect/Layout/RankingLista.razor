@@ -1,0 +1,49 @@
+﻿@using System.Globalization
+@* Lista numerada con una barra fina debajo de cada fila. Sirve para "mas vistos" (barra = proporcion frente al primero) y para "por terminar" (barra = avance real). *@
+<div class="ranking">
+  @if (Items.Count == 0)
+  {
+    <p class="ranking-vacio">@Vacio</p>
+  }
+  else
+  {
+    <ol class="ranking-lista">
+      @for (int i = 0; i < Items.Count; i++)
+      {
+        var it = Items[i];
+        <li class="ranking-fila">
+          <span class="ranking-pos">@(i + 1)</span>
+          <div class="ranking-cuerpo">
+            <div class="ranking-linea">
+              <span class="ranking-titulo" title="@it.Titulo">
+                @it.Titulo
+              </span>
+              <span class="ranking-detalle">
+                @it.Detalle
+              </span>
+            </div>
+            <div class="ranking-barra">
+              <div class="ranking-relleno" style="width: @Ancho(it.Porcentaje)%"></div>
+            </div>
+          </div>
+        </li>
+      }
+    </ol>
+  }
+</div>
+
+@code {
+  public class RankingItem
+  {
+    public string Titulo { get; set; } = "";
+    public string Detalle { get; set; } = "";
+    // 0 A 100: ancho de la barra
+    public double Porcentaje { get; set; }
+  }
+
+  [Parameter] public List<RankingItem> Items { get; set; } = new();
+  [Parameter] public string Vacio { get; set; } = "Sin datos todavía.";
+
+  private static string Ancho(double pct) => Math.Clamp(pct, 3, 100).ToString("0.##", CultureInfo.InvariantCulture);
+
+}

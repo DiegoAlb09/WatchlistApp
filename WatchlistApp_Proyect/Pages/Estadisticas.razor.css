@@ -88,3 +88,21 @@
   font-weight: 600;
   color: var(--muted);
 }
+.destacados-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-lg);
+}
+.destacado-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-lg);
+}
+.destacado-titulo {
+  margin: 0 0 var(--space-md);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+}

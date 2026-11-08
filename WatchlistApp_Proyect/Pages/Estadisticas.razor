@@ -70,6 +70,18 @@ else
       <ActividadHeatmap Dias="@actividadPorDia" Semanas="12" />
     }
 
+    <h2 class="stats-subtitle">Destacados</h2>
+    <div class="destacados-row">
+      <div class="destacado-card">
+        <h3 class="destacado-titulo">Más vistos este mes</h3>
+        <RankingLista Items="@topDelMes" Vacio="Todavía no has visto nada este mes." />
+      </div>
+      <div class="destacado-card">
+        <h3 class="destacado-titulo">Por terminar</h3>
+        <RankingLista Items="@porTerminar" Vacio="Nada cerca de terminarse por ahora." />
+      </div>
+    </div>
+
     <h2 class="stats-subtitle">Progreso general por sección</h2>
     <div class="donuts-row">
       <div class="donut-card">
@@ -220,6 +232,75 @@ else
   // Cuantas cosas viste cada dia (clave = solo la fecha, en hora local). Alimenta el mapa de actividad.
   private Dictionary<DateTime, int> actividadPorDia =>
       historial?.GroupBy(h => FechaLocal(h).Date).ToDictionary(g => g.Key, g => g.Count()) ?? new();
+
+
+  // ===== Destacados =====
+  // Una serie/libro entra en "Por terminar" cuando ya llevas al menos este avance (0.5 = 50 %).
+  private const double UmbralPorTerminar = 0.5;
+
+  private List<RankingLista.RankingItem> topDelMes
+  {
+    get
+    {
+      var hoy = DateTime.Today;
+      var delMes = (historial ?? new())
+          .Where(h => { var f = FechaLocal(h); return f.Year == hoy.Year && f.Month == hoy.Month; })
+          .ToList();
+      if (delMes.Count == 0) return new();
+
+      var top = delMes
+          .GroupBy(h => h.ItemId)
+          .Select(g => (Titulo: g.OrderByDescending(x => x.Fecha).First().Titulo, N: g.Count()))
+          .OrderByDescending(x => x.N).ThenBy(x => x.Titulo)
+          .Take(5)
+          .ToList();
+
+      var max = top.Max(x => x.N);
+      return top.Select(x => new RankingLista.RankingItem
+      {
+        Titulo = x.Titulo,
+        Detalle = x.N == 1 ? "1 vista" : $"{x.N} vistas",
+        Porcentaje = x.N * 100.0 / max
+      }).ToList();
+    }
+  }
+
+  private List<RankingLista.RankingItem> porTerminar
+  {
+    get
+    {
+      var lista = new List<(string Titulo, double Avance, string Detalle)>();
+
+      foreach (var s in series ?? new())
+      {
+        if (s.Tipo != TipoContenido.Serie || s.EstaCompleta || s.TotalUnidades == 0 || s.UnidadesVistas == 0)
+          continue;
+
+        var avance = (double)s.UnidadesVistas / s.TotalUnidades;
+        if (avance < UmbralPorTerminar) continue;
+
+        var faltan = s.TotalUnidades - s.UnidadesVistas;
+        lista.Add((s.Titulo, avance, faltan == 1 ? "falta 1 episodio" : $"faltan {faltan} episodios"));
+      }
+
+      foreach (var l in libros ?? new())
+      {
+        if (l.EstaCompleta || l.Porcentaje is null) continue;
+
+        var avance = l.Porcentaje.Value / 100.0;
+        if (avance < UmbralPorTerminar) continue;
+
+        var faltan = (l.CapituloFin ?? l.CapituloActual) - l.CapituloActual;
+        lista.Add((l.Titulo, avance, faltan <= 1 ? "casi listo" : $"faltan {faltan} cap."));
+      }
+
+      return lista
+          .OrderByDescending(x => x.Avance)
+          .Take(5)
+          .Select(x => new RankingLista.RankingItem { Titulo = x.Titulo, Detalle = x.Detalle, Porcentaje = x.Avance * 100 })
+          .ToList();
+    }
+  }
 
   // ===== Actividad por dia de la semana (respeta el selector de periodo) =====
   private static readonly (DayOfWeek Dia, string Nombre)[] DiasSemana =
