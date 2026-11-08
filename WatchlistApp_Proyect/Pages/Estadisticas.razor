@@ -44,6 +44,29 @@ else
       </div>
     </div>
 
+
+    @if (historial.Count > 0)
+    {
+      <h2 class="stats-subtitle">Tu ritmo</h2>
+      <div class="stats-grid ritmo-grid">
+        <div class="stat-card">
+          <span class="stat-number">@vistasEsteMes</span>
+          <span class="stat-label">Vistas este mes</span>
+          <span class="stat-detalle">@comparativaMes</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number">@rachaActual</span>
+          <span class="stat-label">@(rachaActual == 1 ? "día de racha" : "días de racha")</span>
+          <span class="stat-detalle">Sigue viva si viste algo hoy o ayer</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-number">@mejorRacha</span>
+          <span class="stat-label">Mejor racha</span>
+          <span class="stat-detalle">días seguidos</span>
+        </div>
+      </div>
+    }
+
     <h2 class="stats-subtitle">Progreso general por sección</h2>
     <div class="donuts-row">
       <div class="donut-card">
@@ -86,6 +109,11 @@ else
       <span class="donut-detalle bloque-detalle">
         @historial.Count capítulos/películas vistas registradas en total
       </span>
+
+      <h2 class="stats-subtitle">Actividad por día de la semana <span class="stats-nota">(últimos @meses meses)</span></h2>
+      <BarChart Items="@barItemsPorDiaSemana" />
+      <span class="donut-detalle bloque-detalle">Tu día más activo: @diaMasActivo</span>
+
     }
   }
 
@@ -109,6 +137,128 @@ else
       libros ??= new();
       historial ??= new();
       Toasts.Error(ApiHelper.MensajeParaToast(ex, "No se pudieron cargar las estadísticas. Revisa tu conexión con el servidor."));
+    }
+  }
+
+
+  // ===== Ritmo: todo se calcula en HORA LOCAL (el servidor guarda UTC) =====
+  private static DateTime FechaLocal(HistorialVisto h) => h.Fecha.ToLocalTime();
+
+  private List<DateTime> diasConActividad =>
+      historial?.Select(h => FechaLocal(h).Date).Distinct().OrderBy(d => d).ToList() ?? new();
+
+  private int vistasEsteMes
+  {
+    get
+    {
+      var hoy = DateTime.Today;
+      return historial?.Count(h => { var f = FechaLocal(h); return f.Year == hoy.Year && f.Month == hoy.Month; }) ?? 0;
+    }
+  }
+
+  // Mes pasado hasta el mismo dia del mes (comparacion justa: no contra el mes completo).
+  private int vistasMesPasadoAlDia
+  {
+    get
+    {
+      var hoy = DateTime.Today;
+      var inicio = new DateTime(hoy.Year, hoy.Month, 1).AddMonths(-1);
+      var dia = Math.Min(hoy.Day, DateTime.DaysInMonth(inicio.Year, inicio.Month));
+      return historial?.Count(h =>
+      {
+        var f = FechaLocal(h);
+        return f.Year == inicio.Year && f.Month == inicio.Month && f.Day <= dia;
+      }) ?? 0;
+    }
+  }
+
+  private string comparativaMes
+  {
+    get
+    {
+      var d = vistasEsteMes - vistasMesPasadoAlDia;
+      if (d == 0) return "Igual que el mes pasado a esta fecha";
+      return d > 0
+          ? $"▲ {d} más que el mes pasado a esta fecha"
+          : $"▼ {-d} menos que el mes pasado a esta fecha";
+    }
+  }
+
+  private int rachaActual
+  {
+    get
+    {
+      var dias = new HashSet<DateTime>(diasConActividad);
+      var d = DateTime.Today;
+      if (!dias.Contains(d)) d = d.AddDays(-1); // la racha sigue viva si ayer hubo actividad
+      var n = 0;
+      while (dias.Contains(d)) { n++; d = d.AddDays(-1); }
+      return n;
+    }
+  }
+
+  private int mejorRacha
+  {
+    get
+    {
+      var dias = diasConActividad;
+      if (dias.Count == 0) return 0;
+      int mejor = 1, actual = 1;
+      for (int i = 1; i < dias.Count; i++)
+      {
+        if ((dias[i] - dias[i - 1]).Days == 1) { actual++; mejor = Math.Max(mejor, actual); }
+        else actual = 1;
+      }
+      return mejor;
+    }
+  }
+
+  // ===== Actividad por dia de la semana (respeta el selector de periodo) =====
+  private static readonly (DayOfWeek Dia, string Nombre)[] DiasSemana =
+  {
+        (DayOfWeek.Monday, "Lunes"), (DayOfWeek.Tuesday, "Martes"), (DayOfWeek.Wednesday, "Miércoles"),
+        (DayOfWeek.Thursday, "Jueves"), (DayOfWeek.Friday, "Viernes"), (DayOfWeek.Saturday, "Sábado"),
+        (DayOfWeek.Sunday, "Domingo")
+    };
+
+  private int[] conteoPorDiaSemana
+  {
+    get
+    {
+      var conteo = new int[7];
+      var desde = DateTime.Today.AddMonths(-meses);
+      foreach (var h in historial ?? new())
+      {
+        var f = FechaLocal(h);
+        if (f.Date >= desde) conteo[(int)f.DayOfWeek]++;
+      }
+      return conteo;
+    }
+  }
+
+  private List<BarChart.BarItem> barItemsPorDiaSemana
+  {
+    get
+    {
+      var conteo = conteoPorDiaSemana;
+      var max = conteo.Max();
+      return DiasSemana.Select(d => new BarChart.BarItem
+      {
+        Label = d.Nombre,
+        Valor = conteo[(int)d.Dia],
+        Color = max > 0 && conteo[(int)d.Dia] == max ? "var(--chart-1)" : "var(--chart-4)"
+      }).ToList();
+    }
+  }
+
+  private string diaMasActivo
+  {
+    get
+    {
+      var conteo = conteoPorDiaSemana;
+      var max = conteo.Max();
+      if (max == 0) return "—";
+      return string.Join(" y ", DiasSemana.Where(d => conteo[(int)d.Dia] == max).Select(d => d.Nombre));
     }
   }
 
