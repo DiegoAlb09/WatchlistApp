@@ -67,50 +67,9 @@ public class AuthController : ControllerBase
 
   private async Task ReclamarDatosHuerfanosAsync(string userId)
   {
-    // Series: las filas viejas sin dueño ya tienen catalogo (lo creo la
-    // migracion del paso 1, con el mismo Id); falta crearles el vinculo.
-    var series = await _db.WatchlistItems.Where(i => i.UserId == null).ToListAsync();
-    foreach (var s in series)
-    {
-      s.UserId = userId;
-
-      var catalogo = await _db.CatalogoSeries.FindAsync(s.Id);
-      if (catalogo is not null) catalogo.CreadoPorUserId = userId;
-
-      if (catalogo is not null)
-        _db.UsuarioSeries.Add(new UsuarioSerieEntity
-        {
-          Id = s.Id,
-          UserId = userId,
-          CatalogoSerieId = s.Id,
-          Visto = s.Visto,
-          EpisodiosVistos = s.EpisodiosVistos,
-          FechaAgregado = s.FechaAgregado
-        });
-    }
-
-    var libros = await _db.LibroItems.Where(i => i.UserId == null).ToListAsync();
-    foreach (var l in libros)
-    {
-      l.UserId = userId;
-
-      var catalogo = await _db.CatalogoLibros.FindAsync(l.Id);
-      if (catalogo is not null) catalogo.CreadoPorUserId = userId;
-
-      if (catalogo is not null)
-        _db.UsuarioLibros.Add(new UsuarioLibroEntity
-        {
-          Id = l.Id,
-          UserId = userId,
-          CatalogoLibroId = l.Id,
-          CapituloActual = l.CapituloActual,
-          FechaAgregado = l.FechaAgregado
-        });
-    }
-
+    // Las tablas viejas ya no existen: solo queda el historial sin dueño.
     var historial = await _db.HistorialVistos.Where(h => h.UserId == null).ToListAsync();
     foreach (var h in historial) h.UserId = userId;
-
     await _db.SaveChangesAsync();
   }
 

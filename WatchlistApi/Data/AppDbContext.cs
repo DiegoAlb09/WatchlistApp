@@ -9,16 +9,16 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
 {
   public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
-  // ===== Tablas ANTIGUAS (se mantienen en el paso 1; se eliminan al final del rediseño) =====
-  public DbSet<WatchlistItemEntity> WatchlistItems => Set<WatchlistItemEntity>();
-  public DbSet<LibroItemEntity> LibroItems => Set<LibroItemEntity>();
+  // ===== Historial (append-only) =====
   public DbSet<HistorialVistoEntity> HistorialVistos => Set<HistorialVistoEntity>();
 
-  // ===== Tablas NUEVAS: catalogos compartidos + relacion con usuarios =====
+  // ===== Catalogos compartidos + relacion con usuarios =====
   public DbSet<CatalogoSerieEntity> CatalogoSeries => Set<CatalogoSerieEntity>();
   public DbSet<UsuarioSerieEntity> UsuarioSeries => Set<UsuarioSerieEntity>();
   public DbSet<CatalogoLibroEntity> CatalogoLibros => Set<CatalogoLibroEntity>();
   public DbSet<UsuarioLibroEntity> UsuarioLibros => Set<UsuarioLibroEntity>();
+
+  // ===== Avisos de cambios en titulos compartidos =====
   public DbSet<AvisoCambioEntity> AvisosCambio => Set<AvisoCambioEntity>();
 
   // SQLite no soporta listas nativamente: se guarda como "1,2,3" y se convierte de vuelta a List<int>.
@@ -39,30 +39,21 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
     // OBLIGATORIO: configura las tablas de Identity.
     base.OnModelCreating(modelBuilder);
 
-    // ----- Tabla antigua -----
-    modelBuilder.Entity<WatchlistItemEntity>()
-        .Property(e => e.EpisodiosVistos)
-        .HasConversion(v => ListaATexto(v), v => TextoALista(v))
-        .Metadata.SetValueComparer(NuevoComparerEpisodios());
-
-    // ----- Catalogo de series/peliculas -----
+    // ----- Series y peliculas -----
     modelBuilder.Entity<CatalogoSerieEntity>(e =>
     {
-      e.HasIndex(x => x.Titulo); // para el buscador del paso 3
+      e.HasIndex(x => x.Titulo); // buscador
     });
 
     modelBuilder.Entity<UsuarioSerieEntity>(e =>
     {
-      // Un usuario no puede tener el mismo titulo dos veces.
       e.HasIndex(x => new { x.UserId, x.CatalogoSerieId }).IsUnique();
 
-      // Proteccion: no se puede borrar un titulo del catalogo si alguien lo tiene.
       e.HasOne(x => x.Catalogo)
               .WithMany(c => c.Usuarios)
               .HasForeignKey(x => x.CatalogoSerieId)
               .OnDelete(DeleteBehavior.Restrict);
 
-      // Si se borra la cuenta, se borra su lista (pero no el catalogo).
       e.HasOne<ApplicationUser>()
               .WithMany()
               .HasForeignKey(x => x.UserId)
@@ -73,7 +64,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
               .Metadata.SetValueComparer(NuevoComparerEpisodios());
     });
 
-    // ----- Catalogo de libros/manga/comics -----
+    // ----- Libros, manga y comics -----
     modelBuilder.Entity<CatalogoLibroEntity>(e =>
     {
       e.HasIndex(x => x.Titulo);
@@ -94,12 +85,11 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
               .OnDelete(DeleteBehavior.Cascade);
     });
 
-    // ----- Avisos de cambio -----
+    // ----- Avisos -----
     modelBuilder.Entity<AvisoCambioEntity>(e =>
     {
-      e.HasIndex(x => new { x.UserId, x.Estado});
+      e.HasIndex(x => new { x.UserId, x.Estado });
 
-      // Si se borra la cuenta se borran sus avisos
       e.HasOne<ApplicationUser>()
               .WithMany()
               .HasForeignKey(x => x.UserId)

@@ -373,43 +373,6 @@ namespace WatchlistApi.Migrations
                     b.ToTable("HistorialVistos");
                 });
 
-            modelBuilder.Entity("WatchlistApi.Models.LibroItemEntity", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("CapituloActual")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int?>("CapituloFin")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("CapituloInicio")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("FechaAgregado")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("PortadaUrl")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("Tipo")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Titulo")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("UserId")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("LibroItems");
-                });
-
             modelBuilder.Entity("WatchlistApi.Models.UsuarioLibroEntity", b =>
                 {
                     b.Property<Guid>("Id")
@@ -470,59 +433,6 @@ namespace WatchlistApi.Migrations
                         .IsUnique();
 
                     b.ToTable("UsuarioSeries");
-                });
-
-            modelBuilder.Entity("WatchlistApi.Models.WatchlistItemEntity", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
-
-                    b.Property<int?>("DiaEmision")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("EnEmision")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int?>("EpisodioFin")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int?>("EpisodioInicio")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("EpisodiosVistos")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("FechaAgregado")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("FechaFinEmision")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("FechaInicioEmision")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("PortadaUrl")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("Tipo")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Titulo")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("UserId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("Visto")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("WatchlistItems");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
