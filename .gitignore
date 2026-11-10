@@ -15,3 +15,6 @@ Thumbs.db
 watchlist.db
 watchlist.db-shm
 watchlist.db-wal
+watchlist.backup-antes-de-limpieza.db
+
+scripts/
