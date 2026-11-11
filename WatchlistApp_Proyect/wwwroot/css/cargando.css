@@ -1,0 +1,62 @@
+/* PANTALLA DE CARGA. Se ve ANTES de que arranque Blazor, asi que solo puede usar 
+  CSS (index.html la carga desde app.css) y las variables que Blazor va escribiendo en <html>:
+  --blazor-load-percentage -> "45%" (ancho de la barra)
+  --blazor-load-percentage-text -> "45%" (texto, ya con comillas)
+*/
+
+.cargando {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-lg);
+  background: var(--bg);
+  color: var(--text);
+}
+
+.cargando-titulo {
+  font-family: var(--font-display);
+  font-size: 2.25rem;
+  font-weight: 400;
+  line-height: 1;
+  margin: 0;
+}
+
+.cargando-gato {
+  display: block;
+  animation: cargando-salto 0.8s steps(2, jump-none) infinite;
+}
+@keyframes cargando-salto {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-8px) }
+}
+
+.cargando-barra {
+  width: min(240px, 70vw);
+  height: 14px;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+.cargando-relleno {
+  height: 100%;
+  width: var(--blazor-load-percentage, 0%);
+  background: var(--accent);
+  transition: width 0.1s linear;
+}
+
+.cargando-texto {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+.cargando-texto::after {
+  content: "Cargando " var(--blazor-load-percentage-text, "");
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cargando-gato { animation: none; }
+}

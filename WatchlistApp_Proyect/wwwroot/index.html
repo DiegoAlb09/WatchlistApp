@@ -3,17 +3,20 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>WatchlistApp_Proyect</title>
+    <title>Mi Watchlist</title>
     <base href="/" />
     <link rel="preload" id="webassembly" />
     <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="WatchlistApp_Proyect.styles.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Jersey+10&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Jersey+10&family=Manrope:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="css/app.css" />
+    <link rel="stylesheet" href="WatchlistApp_Proyect.styles.css" />
     <link rel="icon" type="image/png" href="favicon.png" />
-    <link href="WatchlistApp_Proyect.styles.css" rel="stylesheet" />
+    <meta name="theme-color" content="#ff5e24" />
     <script type="importmap"></script>
     <script src="js/theme.js"></script>
     <script>
@@ -23,11 +26,56 @@
 
   <body>
     <div id="app">
-      <svg class="loading-progress">
-        <circle r="40%" cx="50%" cy="50%" />
-        <circle r="40%" cx="50%" cy="50%" />
-      </svg>
-      <div class="loading-progress-text"></div>
+      <div class="cargando" role="status" aria-live="polite">
+        <h1 class="cargando-titulo">Mi Watchlist</h1>
+        <svg
+          class="cargando-gato"
+          xmlns="http://www.w3.org/2000/svg"
+          width="128"
+          height="112"
+          viewBox="0 0 16 14"
+          shape-rendering="crispEdges"
+          aria-hidden="true"
+        >
+          <rect x="3" y="0" width="1" height="1" fill="#ff5e24" />
+          <rect x="12" y="0" width="1" height="1" fill="#ff5e24" />
+          <rect x="3" y="1" width="2" height="1" fill="#ff5e24" />
+          <rect x="11" y="1" width="2" height="1" fill="#ff5e24" />
+          <rect x="3" y="2" width="1" height="1" fill="#ff5e24" />
+          <rect x="4" y="2" width="1" height="1" fill="#dbced0" />
+          <rect x="5" y="2" width="1" height="1" fill="#ff5e24" />
+          <rect x="10" y="2" width="1" height="1" fill="#ff5e24" />
+          <rect x="11" y="2" width="1" height="1" fill="#dbced0" />
+          <rect x="12" y="2" width="1" height="1" fill="#ff5e24" />
+          <rect x="2" y="3" width="12" height="1" fill="#ff5e24" />
+          <rect x="2" y="4" width="12" height="1" fill="#ff5e24" />
+          <rect x="2" y="5" width="3" height="1" fill="#ff5e24" />
+          <rect x="5" y="5" width="1" height="1" fill="#232629" />
+          <rect x="6" y="5" width="4" height="1" fill="#ff5e24" />
+          <rect x="10" y="5" width="1" height="1" fill="#232629" />
+          <rect x="11" y="5" width="3" height="1" fill="#ff5e24" />
+          <rect x="2" y="6" width="5" height="1" fill="#ff5e24" />
+          <rect x="7" y="6" width="2" height="1" fill="#dbced0" />
+          <rect x="9" y="6" width="5" height="1" fill="#ff5e24" />
+          <rect x="3" y="7" width="10" height="1" fill="#ff5e24" />
+          <rect x="4" y="8" width="8" height="1" fill="#ff5e24" />
+          <rect x="14" y="8" width="1" height="1" fill="#ff5e24" />
+          <rect x="3" y="9" width="3" height="1" fill="#ff5e24" />
+          <rect x="6" y="9" width="4" height="1" fill="#dbced0" />
+          <rect x="10" y="9" width="3" height="1" fill="#ff5e24" />
+          <rect x="14" y="9" width="1" height="1" fill="#ff5e24" />
+          <rect x="3" y="10" width="3" height="1" fill="#ff5e24" />
+          <rect x="6" y="10" width="4" height="1" fill="#dbced0" />
+          <rect x="10" y="10" width="5" height="1" fill="#ff5e24" />
+          <rect x="3" y="11" width="10" height="1" fill="#ff5e24" />
+          <rect x="3" y="12" width="2" height="1" fill="#ff5e24" />
+          <rect x="11" y="12" width="2" height="1" fill="#ff5e24" />
+          <rect x="3" y="13" width="2" height="1" fill="#dbced0" />
+          <rect x="11" y="13" width="2" height="1" fill="#dbced0" />
+        </svg>
+        <div class="cargando-barra"><div class="cargando-relleno"></div></div>
+        <p class="cargando-texto"></p>
+      </div>
     </div>
 
     <div id="blazor-error-ui">
