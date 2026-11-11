@@ -1,207 +1,232 @@
-# 🎬📚📊 Mi Watchlist
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/banner-dark.svg">
+    <img alt="Mi Watchlist: banner en pixel art con un gato naranja" src="assets/banner-light.svg" width="100%">
+  </picture>
+</p>
 
-Aplicación web para llevar el control de series, películas, libros, manga y cómics pendientes por ver/leer. Permite agregar títulos, clasificarlos, llevar un rango o avance de capítulos, ver el progreso general y estadísticas con gráficas, elegir algo al azar para ver, y llevar un calendario (semanal o mensual) de qué series están en emisión — todo con modo oscuro/claro.
+<h3 align="center">Lo que ves y lo que lees, en un solo lugar.<br>Con cuentas, un catálogo que comparten todos y estadísticas que sí dicen algo.</h3>
 
-Los datos ya **no viven solo en el navegador**: hay un backend real (ASP.NET Core Web API + SQLite + migraciones de EF Core) que los guarda de forma persistente, con **cuentas de usuario** — cada quien ve solo su propia watchlist, y puede acceder a ella desde cualquier dispositivo iniciando sesión. La primera vez que corras la app, cualquier dato que tuvieras en `localStorage` se migra automáticamente a tu cuenta, sin borrarse (queda de respaldo).
+<p align="center">
+  <img alt="Blazor WebAssembly" src="https://img.shields.io/badge/Blazor-WebAssembly-ff5e24?style=flat-square&labelColor=232629">
+  <img alt=".NET 8" src="https://img.shields.io/badge/.NET-8-ff5e24?style=flat-square&labelColor=232629">
+  <img alt="SQLite + EF Core" src="https://img.shields.io/badge/SQLite-EF%20Core-ff5e24?style=flat-square&labelColor=232629">
+  <img alt="JWT" src="https://img.shields.io/badge/Auth-Identity%20%2B%20JWT-ff5e24?style=flat-square&labelColor=232629">
+</p>
 
----
+<p align="center"><img src="assets/divider.svg" alt="" width="300"></p>
 
-## ✨ Funcionalidades actuales
+## 🐱 La idea
 
-### Navegación
-- Navbar superior con tres pestañas: **Series/Películas**, **Libros/Manga/Cómics** y **Estadísticas**.
-- Botón de **modo oscuro/claro**, con la preferencia guardada en `localStorage`.
+Empezó como una lista de series pendientes guardada en `localStorage` y terminó siendo una aplicación completa:
+backend propio, cuentas de usuario, una base de datos donde **un título existe una sola vez** aunque lo tengan cien personas,
+y un diseño que no se parece a ninguna plantilla.
 
-### 🔐 Cuentas y sincronización
-- Registro e inicio de sesión con correo y contraseña (ASP.NET Core Identity + JWT).
-- Cada usuario ve **solo su propia watchlist** — series, libros, e historial quedan asociados a su cuenta.
-- Inicia sesión desde cualquier navegador/dispositivo y ves los mismos datos (no es sincronización en tiempo real: se actualiza al recargar/navegar, no mientras tienes la pestaña abierta).
-- El token de sesión dura 30 días; si vence, la app te regresa sola a la pantalla de login.
-- La primera cuenta que se registra **adopta automáticamente** cualquier dato que ya existiera en el backend antes de que hubiera login (de cuando la app aún no tenía cuentas).
-- Las preferencias de interfaz (filtro, orden, tema) **no sincronizan** — son por navegador, no por cuenta.
+Hay tres cosas que la hacen distinta de “otra app de to-do”:
 
-### 🎬 Series y Películas
-- Barra de progreso general, ponderada por capítulos vistos y películas vistas.
-- Filtros: Todo / Solo series / Solo películas / En progreso.
-- Búsqueda por título y orden (recientes, antiguos, más avanzados primero, título A-Z/Z-A).
-- Toggle **"Compactar completos"**.
-- El filtro, la búsqueda, el orden y "compactar completos" se recuerdan entre sesiones.
-- Agregar/Editar: título, portada (URL), tipo, y para series un **rango de capítulos** pendientes.
-- Checklist de capítulos; para películas, checkbox de "Vista".
-- **Tag "EN EMISIÓN"** en series activas, con día de la semana configurable.
-- **📅 Calendario de estrenos** (modal), con dos vistas:
-  - **Semana**: lista de qué series salen cada día de la semana.
-  - **Mes**: grilla de calendario mensual completa, con navegación entre meses (‹ ›). Como el día de emisión es fijo semanalmente (no fechas exactas por episodio), la vista de mes repite ese día en cada semana — no requiere datos adicionales en el backend.
-- **🎲 Botón "Sorpréndeme"** (modal): elige al azar algo pendiente por ver, sin repetir la última elección salvo que sea la única opción disponible.
-- Eliminar con confirmación previa.
+1. **El catálogo es de todos.** Si alguien ya registró *One Piece*, el siguiente usuario lo busca, lo agrega y empieza con su propio progreso en cero.
+2. **Las ediciones no pisan a nadie.** Cuando alguien corrige un dato de un título compartido, nace una versión nueva y los demás reciben un aviso para **aceptar el cambio o quedarse con la suya**.
+3. **Las estadísticas hablan de hábitos, no solo de totales:** racha, mapa de actividad, qué días ves más, qué estás a punto de terminar.
 
-### 📚 Libros, Manga y Cómics
-- Diseño de lista, con portada tipo lomo de libro y stepper (−/+) de capítulo/tomo.
-- Barra de progreso individual (si defines una meta).
-- Filtros, búsqueda y orden — mismo comportamiento que en Series, con sus propias preferencias guardadas.
+## 🧭 Qué hay adentro
 
-### 📊 Estadísticas
-- 4 tarjetas de resumen: títulos totales, completados, en progreso, sin empezar.
-- 2 gráficas de dona: progreso general de cada sección.
-- 1 gráfica de barras: distribución por tipo (Series, Películas, Libros, Manga, Cómics).
-- 1 gráfica de barras: vistas por mes (últimos 6 meses), basada en el historial de eventos.
-- Construidas con SVG puro (`DonutChart.razor`, `BarChart.razor`, reutilizables), sin librerías externas.
+| | |
+|---|---|
+| **Series y películas** | Rango de capítulos con checklist por episodio, filtros, búsqueda, orden por avance. Una serie **EN EMISIÓN** tiene día de la semana y fechas de inicio y fin: se dibuja en un calendario semanal o mensual y pasa sola a **FINALIZADO** al terminar el rango o al completar los capítulos. 🎲 *Sorpréndeme* elige algo pendiente sin repetir la última. |
+| **Libros, manga y cómics** | Lista con stepper de capítulo y barra de progreso individual cuando hay meta. |
+| **Catálogo compartido** | Buscador para agregar un título que ya existe sin llenar el formulario; edición con versiones y campana 🔔 de avisos. |
+| **Estadísticas** | Tarjetas de resumen, dos donas, barras proporcionales por tipo, columnas por mes (3, 6 o 12), **tu ritmo** (este mes contra el mes pasado *hasta el mismo día*, racha actual y mejor racha), **mapa de actividad de 12 semanas** en cuadritos, actividad por día de la semana, los más vistos del mes y lo que está **por terminar**. |
+| **Cuentas** | Registro e inicio de sesión (ASP.NET Core Identity + JWT propio de 30 días). Cada quien ve solo su lista. |
+| **Cuidado de los detalles** | Toasts de éxito y error, modal de confirmación propio (nada de `confirm()` del navegador), cambios que **se revierten solos** si el guardado falla, tema claro/oscuro y pantalla de carga con barra de progreso real. |
 
-### Historial de vistas
-- Cada vez que marcas un episodio, una película, o avanzas un capítulo de libro/manga/cómic, se registra un evento con fecha.
-- Es un log que solo crece: nunca se borra ni se edita, ni siquiera si después desmarcas el episodio o retrocedes el capítulo.
-- Alimenta la gráfica de "vistas por mes" en Estadísticas.
+> **Historial append-only:** cada episodio o capítulo marcado queda registrado con su fecha y nunca se borra, ni siquiera si luego lo desmarcas. Las estadísticas salen de ahí.
 
-### Interfaz
-- Íconos SVG (Heroicons + algunos propios: `chart`, `dice`) en vez de emojis, en un componente `Icon.razor` reutilizable.
-- Inputs con estilo propio, buen contraste en ambos temas.
-- Patrón de modal reutilizable (`.modal-overlay`/`.modal-card`), usado por "Sorpréndeme" y el calendario de estrenos.
-- **CSS organizado en dos niveles**: módulos globales compartidos (`wwwroot/css/*.css`, ej. botones, formularios, layout) y **CSS isolation de Blazor** (`ComponentName.razor.css`) para estilos exclusivos de una sola página o componente (tarjetas, checklists, calendario, estadísticas, gráficas) — ver estructura abajo.
+<!--
+  📸 GALERÍA — descomenta este bloque cuando tengas las capturas en docs/screens/
+  (sugeridas: home.png, calendario.png, estadisticas.png, campana-avisos.png, login.png)
 
-### Persistencia
-- **Backend real**: ASP.NET Core Web API + Entity Framework Core + SQLite, con **migraciones reales** (`dotnet ef migrations add ...`) en vez de recrear la base de datos a mano en cada cambio de modelo.
-- **Autenticación**: ASP.NET Core Identity + JWT propio (no los endpoints integrados de Identity, por las reglas de cookies/tokens que complican una SPA). Cada tabla (`WatchlistItems`, `LibroItems`, `HistorialVistos`) tiene un `UserId` que filtra todo por el usuario autenticado.
-- La app migra automáticamente los datos viejos de `localStorage` a tu cuenta la primera vez que corre.
-- Las preferencias de interfaz (filtro/orden/búsqueda/compactar) siguen viviendo en `localStorage`.
+<p align="center">
+  <img src="docs/screens/home.png" width="49%" alt="Lista de series">
+  <img src="docs/screens/estadisticas.png" width="49%" alt="Estadísticas con mapa de actividad">
+</p>
+<p align="center">
+  <img src="docs/screens/calendario.png" width="49%" alt="Calendario de estrenos">
+  <img src="docs/screens/campana-avisos.png" width="49%" alt="Avisos de cambios en un título compartido">
+</p>
+-->
 
----
+<p align="center"><img src="assets/divider.svg" alt="" width="300"></p>
 
-## 🛠️ Tecnología
+## 🔧 Por dentro
 
-**Frontend**
-- [Blazor WebAssembly](https://learn.microsoft.com/aspnet/core/blazor/) (.NET 8)
-- C# + Razor Components
-- CSS modular con variables (design tokens) + CSS isolation por componente
-- Gráficas SVG hechas a mano (sin dependencias de charting)
+### Un título, muchas listas
 
-**Backend**
-- ASP.NET Core Web API (.NET 8)
-- Entity Framework Core + SQLite, con migraciones (`dotnet ef`)
-- ASP.NET Core Identity + JWT Bearer para autenticación
-- CORS abierto para desarrollo local
+El título vive en un **catálogo**; lo que es de cada persona (su progreso) vive en una tabla intermedia. Hay un catálogo para series/películas y otro para libros/manga/cómics, porque sus campos son distintos.
 
----
+```mermaid
+erDiagram
+    USUARIO ||--o{ USUARIO_SERIE : "tiene en su lista"
+    CATALOGO_SERIE ||--o{ USUARIO_SERIE : "aparece en"
+    USUARIO ||--o{ AVISO_CAMBIO : "recibe"
+    USUARIO ||--o{ HISTORIAL_VISTO : "registra"
 
-## ▶️ Cómo correrlo localmente
-
-Requiere el [.NET SDK 8.0](https://dotnet.microsoft.com/download) y la herramienta `dotnet-ef` (`dotnet tool install --global dotnet-ef`). Se necesitan **dos terminales abiertas al mismo tiempo**.
-
-**Terminal 1 — Backend:**
-
-Primero, configura la clave del JWT como variable de entorno (nunca vive en el código ni en `appsettings.json`, que sí se sube al repo):
-```powershell
-# PowerShell — para la sesión actual
-$env:Jwt__Key = "escribe-aqui-una-clave-larga-de-al-menos-32-caracteres"
-
-# O para que quede permanente (requiere abrir una terminal nueva después)
-setx Jwt__Key "escribe-aqui-una-clave-larga-de-al-menos-32-caracteres"
+    CATALOGO_SERIE {
+        guid Id
+        string Titulo
+        string PortadaUrl
+        int EpisodioInicio
+        int EpisodioFin
+        bool EnEmision
+        guid ReemplazadoPorId
+    }
+    USUARIO_SERIE {
+        guid Id
+        string UserId
+        guid CatalogoSerieId
+        bool Visto
+        string EpisodiosVistos
+    }
+    AVISO_CAMBIO {
+        guid Id
+        string UserId
+        guid CatalogoAnteriorId
+        guid CatalogoNuevoId
+        string Resumen
+        int Estado
+    }
 ```
-Nota el **doble guion bajo** (`Jwt__Key`) — es la convención de ASP.NET Core para mapear una variable de entorno a una clave anidada (`Jwt:Key`). Si se te olvida configurarla, el backend no arranca y te lo dice explícitamente en la consola.
 
-```bash
+*Compartido:* título, portada, tipo, rango de capítulos y datos de emisión. *Personal:* solo el progreso.
+
+### Qué pasa cuando alguien edita un título compartido
+
+```mermaid
+flowchart TD
+    A[Edito un título] --> B{¿Alguien más lo tiene?}
+    B -- No --> C[Se edita directo]
+    B -- Sí --> D[Nace una versión nueva<br/>y mi lista pasa a ella]
+    D --> E[Los demás reciben un aviso]
+    E --> F{Cada quien decide}
+    F -- Aceptar --> G[Su vínculo pasa a la versión nueva<br/>y conserva su progreso]
+    F -- Mantener la mía --> H[Sigue en su versión]
+    G --> I[Las versiones viejas sin usuarios se limpian]
+    H --> I
+```
+
+Las versiones son **inmutables**: nadie ve un cambio que no aceptó, y si alguien estropea los datos, la versión anterior sigue existiendo. La versión *más reciente* de un título se conserva aunque nadie la tenga: es justo lo que hace útil al catálogo.
+Los avisos **no revelan quién editó**.
+
+<details>
+<summary><b>🐛 Bugs reales que me enseñaron algo</b></summary>
+
+<br>
+
+| Lo que pasaba | La causa | Lo que hice |
+|---|---|---|
+| Aparecían **dos archivos `.db`** y el historial “desaparecía” | La ruta de la base era relativa y cambiaba según desde dónde se ejecutaba | Ruta absoluta con `ContentRootPath` y un log de cuál se usa |
+| Un `500` del backend mostraba el toast de **“guardado ✅”** | `PostAsJsonAsync` / `PutAsJsonAsync` **no lanzan excepción** en un 4xx/5xx (a diferencia de `GetFromJsonAsync`) | `ApiHelper.VerificarAsync` + `ApiException` con mensajes listos para mostrar |
+| Los toasts existían en el DOM pero **no se veían** | Bootstrap trae una clase `.toast` con `display: none` salvo que tenga `.show` | Renombrar las clases propias a `.notif-*` |
+| Libros perdió la etiqueta de tipo | Al pasar a CSS isolation, la regla quedó con alcance solo para Home | Estilos compartidos a un módulo global (`tags.css`) |
+| Un círculo negro enorme al arrancar | Los estilos del indicador de carga de la plantilla estaban en el `app.css` original, ya reemplazado | Pantalla de carga propia que usa las variables de progreso de Blazor |
+| Riesgo de **mezclar tipos** al mover un enum | SQLite guarda el número, no el nombre: reordenar valores cambia todo en silencio | Script que compara los enums antes de borrar las clases viejas |
+| Barras de una gráfica que no eran proporcionales | Ancho calculado sin escala y sin cultura invariante | Ancho = valor / máximo, escrito con `InvariantCulture` |
+| Un día de racha “corrido” | El servidor guarda fechas en UTC | Todo el cálculo de ritmo se hace en hora local |
+
+</details>
+
+<p align="center"><img src="assets/divider.svg" alt="" width="300"></p>
+
+## 🎨 Obscura
+
+El diseño sigue un sistema propio con reglas poco comunes, y se respetó hasta donde fue posible:
+
+- **Un solo acento:** el naranja `#ff5e24`. Nada de un segundo color de marca; las categorías de las gráficas se distinguen con grafito y neutros.
+- **Un solo naranja relleno por pantalla:** el botón principal. Lo demás es borde, anillo o texto.
+- **Jersey 10** (tipografía pixel) **solo desde 36 px**; **Manrope** para todo lo demás.
+- **Radio de 6 px** en lo interactivo, 12–16 px en tarjetas y sombras suaves en varias capas.
+- **Pixel art plano**: nubes y un gato hechos con cuadrículas reales (SVG con `crispEdges`), sin suavizado ni degradados.
+
+<p align="center"><img src="assets/paleta.svg" alt="Paleta Obscura" width="100%"></p>
+
+Dos decisiones propias donde el sistema no decía nada o fallaba: el texto sobre el botón naranja es **`#101828` en lugar de blanco** (contraste 5,8:1 en vez de ~3:1) y los **bordes de los campos de texto** son más marcados que el borde suave del sistema, para llegar al 3:1 que pide WCAG. El tema oscuro es una derivación mía (grafito y naranja).
+
+## ▶️ Correrlo en tu máquina
+
+**Necesitas:** [.NET SDK 8](https://dotnet.microsoft.com/download) y `dotnet-ef` (`dotnet tool install --global dotnet-ef`). Se usan **dos terminales**.
+
+**1 · Backend**
+
+```powershell
+# La clave del JWT NUNCA vive en el código ni en appsettings.json (que sí se versiona)
+$env:Jwt__Key = "escribe-aqui-una-clave-larga-de-al-menos-32-caracteres"
+# permanente (abre una terminal nueva después):  setx Jwt__Key "..."
+
 cd WatchlistApi
 dotnet restore
-dotnet run
-```
-Al arrancar imprime la ruta exacta de `watchlist.db` que está usando. Las migraciones pendientes se aplican solas — no hace falta borrar la base de datos al cambiar el modelo, solo generar la migración nueva:
-```bash
-dotnet ef migrations add NombreDelCambio
+dotnet run            # http://localhost:5250 · aplica las migraciones solo
 ```
 
-**Terminal 2 — Frontend:**
-```bash
+> El doble guion bajo (`Jwt__Key`) es la convención de ASP.NET Core para claves anidadas (`Jwt:Key`). Si falta, el backend no arranca y lo dice en consola.
+
+**2 · Frontend**
+
+```powershell
 cd WatchlistApp_Proyect
 dotnet restore
-dotnet watch run
+dotnet watch run      # el puerto aparece en consola (en desarrollo suele ser http://localhost:5224)
 ```
-Abre en el navegador la URL que muestre la terminal (ej. `http://localhost:5224`).
 
-> ⚠️ Si el backend no está corriendo, el frontend va a fallar al cargar los datos (error de red/CORS en la consola del navegador).
+Regístrate con cualquier correo: la primera cuenta que se crea **adopta** los datos que existieran antes de que hubiera login.
+Si el backend no está corriendo, la app muestra toasts de error en vez de romperse.
 
----
+Para cambiar el modelo: `dotnet ef migrations add NombreDelCambio` dentro de `WatchlistApi`.
 
-## 📁 Estructura del proyecto (monorepo)
+<details>
+<summary><b>📁 Estructura del repositorio</b></summary>
+
+<br>
 
 ```
-Watchlist/                       ← raíz del repo (.git aquí)
-├── WatchlistApp_Proyect/        ← Frontend (Blazor WebAssembly)
-│   ├── Models/
-│   │   ├── WatchlistItem.cs          # incluye EnEmision, DiaEmision
-│   │   ├── LibroItem.cs
-│   │   ├── HistorialVisto.cs
-│   │   ├── DiasEmision.cs            # helper: dias de la semana en espanol
-│   │   └── AuthResponse.cs           # respuesta de login/registro (token + email)
-│   ├── Services/
-│   │   ├── LocalStorageService.cs    # habla con el backend + migra localStorage
-│   │   ├── LibraryStorageService.cs
-│   │   ├── HistorialService.cs       # solo GetAll y Registrar (append-only)
-│   │   ├── AuthService.cs            # registro, login, logout
-│   │   ├── CustomAuthStateProvider.cs # decodifica el JWT de localStorage
-│   │   └── AuthTokenHandler.cs       # adjunta el token a cada peticion HTTP
-│   ├── Pages/
-│   │   ├── Home.razor                # tag emision, calendario semana/mes, sorprendeme
-│   │   ├── Home.razor.css            # CSS aislado: tarjetas, checklist, calendario
-│   │   ├── AddItem.razor
-│   │   ├── Libros.razor
-│   │   ├── Libros.razor.css          # CSS aislado: diseño de lista, stepper
-│   │   ├── AgregarLibro.razor
-│   │   ├── Estadisticas.razor        # tarjetas + donas + barras + vistas por mes
-│   │   ├── Estadisticas.razor.css    # CSS aislado: solo lo que renderiza esta pagina
-│   │   ├── Login.razor               # publica, sin @attribute [Authorize]
-│   │   └── Registro.razor            # publica, sin @attribute [Authorize]
-│   ├── Shared/
-│   │   ├── MainLayout.razor          # correo del usuario + boton Salir
-│   │   ├── AuthLayout.razor          # layout sin navbar (Login/Registro)
-│   │   ├── RedirectToLogin.razor     # redirige a /login si no hay sesion
-│   │   ├── Icon.razor
-│   │   ├── DonutChart.razor
-│   │   ├── DonutChart.razor.css      # CSS aislado propio (componente hijo)
-│   │   ├── BarChart.razor
-│   │   └── BarChart.razor.css        # CSS aislado propio (componente hijo)
+Watchlist/
+├── WatchlistApi/                    Backend · ASP.NET Core Web API
+│   ├── Controllers/                 Auth · Watchlist · Libros · Catalogo · Avisos · Historial
+│   ├── Data/                        AppDbContext · limpieza de versiones viejas del catálogo
+│   ├── Helpers/
+│   ├── Migrations/                  se versiona: es código, no datos
+│   ├── Models/                      catálogos, vínculos, avisos, DTOs y enums
+│   ├── appsettings.json             Jwt:Key vacío → se llena con la variable Jwt__Key
+│   └── Program.cs
+├── WatchlistApp_Proyect/            Frontend · Blazor WebAssembly
+│   ├── Layout/                      layouts y componentes compartidos (íconos, gráficas, toasts, modales…)
+│   ├── Models/  Pages/  Services/
 │   └── wwwroot/
-│       ├── css/
-│       │   ├── app.css               # solo @import de lo verdaderamente compartido
-│       │   ├── tokens.css            # incluye .libros-theme (variables compartidas)
-│       │   ├── base.css / layout.css / buttons.css / forms.css / modal.css
-│       │   └── auth.css              # pantallas de Login/Registro
-│       └── js/theme.js
-│
-└── WatchlistApi/                ← Backend (ASP.NET Core Web API)
-    ├── Models/
-    │   ├── ApplicationUser.cs        # extiende IdentityUser
-    │   ├── WatchlistItemEntity.cs    # incluye EnEmision, DiaEmision, UserId
-    │   ├── LibroItemEntity.cs        # incluye UserId
-    │   └── HistorialVistoEntity.cs   # incluye UserId
-    ├── Data/
-    │   └── AppDbContext.cs           # hereda de IdentityDbContext<ApplicationUser>
-    ├── Controllers/
-    │   ├── AuthController.cs         # /api/auth/register, /api/auth/login
-    │   ├── WatchlistController.cs    # [Authorize], filtrado por UserId
-    │   ├── LibrosController.cs       # [Authorize], filtrado por UserId
-    │   └── HistorialController.cs    # [Authorize], filtrado por UserId
-    ├── Migrations/                    # SI se sube a git (es codigo, no datos)
-    ├── Program.cs
-    ├── appsettings.json               # Jwt:Key vacio - se llena por variable de entorno
-    └── watchlist.db                   # se genera solo, no se sube al repo (.gitignore)
+│       ├── css/                     tokens.css → módulos (botones, formularios, modales, pixel art…)
+│       └── js/  favicon.png  icon-192.png  icon-512.png
+├── assets/                          banner, separador y paleta de este README
+└── scripts/                         utilidades de una sola vez
 ```
 
----
+`*.db` está en `.gitignore`: la base de datos no se sube.
 
-## 🚀 Roadmap — próximos pasos
+</details>
 
-### Publicar el backend y el frontend (acceso público)
-- [ ] Publicar el **backend** en un hosting que soporte ASP.NET Core (Azure App Service, Render, Railway, etc.), configurando `Jwt__Key` como variable de entorno ahí también.
-- [ ] Publicar el **frontend** en GitHub Pages o Azure Static Web Apps, apuntando su `HttpClient` a la URL pública del backend.
-- [ ] Restringir el CORS del backend a la URL real del frontend publicado (ahora mismo está abierto con `AllowAnyOrigin`, válido solo para desarrollo local).
-- [ ] Evaluar si SQLite sigue siendo suficiente o conviene PostgreSQL/Azure SQL.
+## 🚧 Lo que falta (y lo que no hace)
 
-### Otras ideas a futuro
-- [ ] Recuperar contraseña (`forgot password`) — hoy no existe, si se te olvida no hay forma de recuperarla sin tocar la base de datos a mano.
-- [ ] Sincronización en tiempo real (SignalR/WebSockets) — hoy los cambios se ven al recargar, no al instante entre dispositivos.
-- [ ] Notas personales por título.
-- [ ] Exportar/importar la watchlist como JSON (respaldo manual).
+Prefiero decirlo yo antes que dejar que alguien lo descubra:
 
----
+- [ ] **Publicarla.** Pendiente: sacar la URL del backend (hoy fija en `Program.cs`) a configuración por entorno, restringir el CORS (hoy abierto, válido solo en desarrollo) y elegir hosting. Evaluar SQLite frente a PostgreSQL.
+- [ ] **Recuperar contraseña.** Hoy, si se olvida, no hay forma de entrar sin tocar la base.
+- [ ] **Límite de intentos de login.**
+- [ ] **Pruebas automáticas.** Toda la verificación ha sido manual; la primera candidata es comprobar que un usuario no ve ni edita datos de otro.
+- [ ] **Eliminar mi cuenta** (al hacerlo, poner en `NULL` el `CreadoPorUserId` de sus títulos).
+- [ ] Sincronización en tiempo real (SignalR). Hoy los cambios entre dispositivos se ven al recargar o navegar.
+- [ ] Notas personales por título y exportar/importar en JSON.
+- [ ] Subir la portada como archivo en lugar de URL (prototipo en pausa).
+- [ ] Fechas exactas por episodio en el calendario (hoy es un día fijo por semana).
 
-## 👤 Autor
-Diego Alberto Aranda Gonzalez — Proyecto Personal, Ingeniería en Computación Inteligente.
+<p align="center"><img src="assets/divider.svg" alt="" width="300"></p>
+
+<p align="center">
+  Hecho por <b>Diego Alberto Aranda Gonzalez</b> · <a href="https://github.com/DiegoAlb09">@DiegoAlb09</a><br>
+  Ingeniería en Computación Inteligente · Universidad Autónoma de Aguascalientes
+</p>
