@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using WatchlistApi.Data;
 using WatchlistApi.Models;
+using WatchlistApi.Services.Correo;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -64,6 +65,8 @@ builder.Services.AddAuthorization();
 // a internet, esto deberia restringirse a los origenes reales del frontend.
 builder.Services.AddCors(opt =>
     opt.AddPolicy("DevCors", p => p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
+
+builder.Services.AddCorreo(builder.Configuration);
 
 var app = builder.Build();
 
